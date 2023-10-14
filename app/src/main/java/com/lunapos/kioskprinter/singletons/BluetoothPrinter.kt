@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
@@ -15,7 +14,6 @@ import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
 import com.lunapos.kioskprinter.R
-import kotlinx.coroutines.delay
 
 class BluetoothPrinter : AbstractPrinter() {
     interface OnBluetoothPermissionsGranted {
@@ -103,17 +101,10 @@ class BluetoothPrinter : AbstractPrinter() {
                     items[0] = "Default printer"
                     for ((i, device) in bluetoothDevicesList.withIndex()) {
                         if (ActivityCompat.checkSelfPermission(
-                                appCompatActivity,
+                                context,
                                 Manifest.permission.BLUETOOTH_CONNECT
                             ) != PackageManager.PERMISSION_GRANTED
                         ) {
-                            // TODO: Consider calling
-                            //    ActivityCompat#requestPermissions
-                            // here to request the missing permissions, and then overriding
-                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                            //                                          int[] grantResults)
-                            // to handle the case where the user grants the permission. See the documentation
-                            // for ActivityCompat#requestPermissions for more details.
                             return
                         }
                         items[i + 1] = device.device.name
@@ -141,13 +132,8 @@ class BluetoothPrinter : AbstractPrinter() {
         })
     }
 
-    override suspend fun print() {
-//        val printer = EscPosPrinter(this.selectedDevice, this.printerDpi, this.printerWidthMM, this.printerNbrCharactersPerLine)
-//        printer
-//            .printFormattedText(
-//                text.trimIndent()
-//            )
-        Log.i("Print BG", this.text)
-        delay(1000)
+    override suspend fun print(context: Context) {
+        val printer = EscPosPrinter(this.selectedDevice, this.printerDpi, this.printerWidthMM, this.printerNbrCharactersPerLine)
+        printer.printFormattedTextAndCut(this.text.trimIndent())
     }
 }

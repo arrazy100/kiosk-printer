@@ -5,7 +5,6 @@ import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -47,7 +46,7 @@ class CoroutinePrinter {
                     }
 
                     // Perform printing tasks for the specific printer (on the background thread)
-                    printer.print()
+                    printer.print(context)
                 }
                 jobs.add(job)
                 job.join()

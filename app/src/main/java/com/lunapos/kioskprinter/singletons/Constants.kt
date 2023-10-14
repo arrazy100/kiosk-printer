@@ -6,3 +6,5 @@ const val SERVER_NOTIFICATION_ID = 1
 const val PRINTER_CHANNEL_ID = "kiosk_printer"
 const val PRINTER_CHANNEL_NAME = "Kiosk Printer"
 const val PRINTER_NOTIFICATION_ID = 2
+
+const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
