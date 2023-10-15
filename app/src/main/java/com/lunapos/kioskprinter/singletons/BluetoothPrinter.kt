@@ -14,6 +14,7 @@ import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothPrintersConnections
 import com.lunapos.kioskprinter.R
+import kotlinx.coroutines.delay
 
 class BluetoothPrinter : AbstractPrinter() {
     interface OnBluetoothPermissionsGranted {
@@ -133,6 +134,8 @@ class BluetoothPrinter : AbstractPrinter() {
     }
 
     override suspend fun print(context: Context) {
+        delay(2000)
+
         if (selectedDevice != null) {
             try {
                 val printer = EscPosPrinter(
@@ -143,8 +146,8 @@ class BluetoothPrinter : AbstractPrinter() {
                 )
                 printer.printFormattedTextAndCut(this.text.trimIndent())
             }
-            catch (e: Exception) {
-                e.printStackTrace()
+            catch (_: Exception) {
+
             }
         }
     }

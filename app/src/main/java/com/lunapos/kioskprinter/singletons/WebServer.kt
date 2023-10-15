@@ -140,8 +140,7 @@ class WebServer private constructor() {
 
                     if (context != null) {
                         coroutinePrinter?.doPrintOnServer(
-                            this.notifications, context,
-                            this.notificationManager!!
+                            context
                         )
                     }
                 } catch (e: IOException) {

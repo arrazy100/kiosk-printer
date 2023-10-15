@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.tcp.TcpConnection
+import kotlinx.coroutines.delay
 
 class TcpPrinter : AbstractPrinter() {
     override fun onRequestPermissionsResult(
@@ -19,6 +20,8 @@ class TcpPrinter : AbstractPrinter() {
     var timeout: Int = 1000
 
     override suspend fun print(context: Context) {
+        delay(2000)
+
         if (ipAddress.isNotBlank() && portAddress.isNotBlank()) {
             try {
                 val printer = EscPosPrinter(
@@ -28,8 +31,8 @@ class TcpPrinter : AbstractPrinter() {
 
                 printer.printFormattedTextAndCut(this.text.trimIndent())
             }
-            catch (e: Exception) {
-                e.printStackTrace()
+            catch (_: Exception) {
+
             }
         }
     }

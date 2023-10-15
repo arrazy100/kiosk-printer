@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.usb.UsbConnection
+import kotlinx.coroutines.delay
 
 
 class UsbPrinter : AbstractPrinter() {
@@ -123,6 +124,8 @@ class UsbPrinter : AbstractPrinter() {
 //            }
 //        }
 
+        delay(2000)
+
         if (usbConnection != null) {
             try {
                 val printer = EscPosPrinter(
@@ -131,9 +134,8 @@ class UsbPrinter : AbstractPrinter() {
                 )
 
                 printer.printFormattedTextAndCut(this.text.trimIndent())
+            } catch (_: Exception) {
 
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
         }
     }
