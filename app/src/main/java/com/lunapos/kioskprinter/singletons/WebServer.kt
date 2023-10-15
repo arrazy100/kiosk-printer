@@ -1,14 +1,21 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
+import android.util.Printer
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.lunapos.kioskprinter.R
+import com.lunapos.kioskprinter.dtos.PrinterBody
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
+import java.io.BufferedReader
 import java.io.IOException
+import java.io.InputStreamReader
+import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.util.concurrent.Executors
 
@@ -24,11 +31,16 @@ class WebServer private constructor() {
             }
     }
 
+    var coroutinePrinter: CoroutinePrinter? = null
+    private lateinit var context: WeakReference<Context>
+    private var notificationManager: NotificationManagerCompat? = null
     private var mHttpServer: HttpServer? = null
-
     private val notifications = Notifications.getInstance()
 
     fun startServer(port: Int, appCompatActivity: AppCompatActivity, context: Context, notificationManager: NotificationManagerCompat) = try {
+        this.context = WeakReference(context)
+        this.notificationManager = notificationManager
+
         mHttpServer = HttpServer.create(InetSocketAddress(port), 0)
         mHttpServer?.executor = Executors.newCachedThreadPool()
         mHttpServer?.createContext("/", rootHandler)
@@ -69,17 +81,37 @@ class WebServer private constructor() {
         os.close()
     }
 
-    private fun handleCorsHeaders(t: HttpExchange) {
-        val responseHeaders = t.responseHeaders
+    private fun handleCorsHeaders(exchange: HttpExchange) {
+        val responseHeaders = exchange.responseHeaders
         responseHeaders.add("Access-Control-Allow-Origin", "*")
         responseHeaders.add("Access-Control-Allow-Methods", "GET, POST")
         responseHeaders.add("Access-Control-Allow-Headers", "Content-Type")
     }
 
-    private fun handleOptionsRequest(t: HttpExchange) {
-        handleCorsHeaders(t)
-        t.sendResponseHeaders(204, -1)
-        t.close()
+    private fun handleOptionsRequest(exchange: HttpExchange) {
+        handleCorsHeaders(exchange)
+        exchange.sendResponseHeaders(204, -1)
+        exchange.close()
+    }
+
+    private inline fun <reified T> parseBody(exchange: HttpExchange): T {
+        // Read the POST request body
+        val isr = InputStreamReader(exchange.requestBody, "UTF-8")
+        val br = BufferedReader(isr)
+        val requestBody = StringBuilder()
+        var line: String?
+        while (br.readLine().also { line = it } != null) {
+            requestBody.append(line)
+        }
+        br.close()
+
+        // Parse the JSON data from the request body
+        val json = requestBody.toString()
+
+        // Parse as object DTO
+        val objectMapper = jacksonObjectMapper()
+
+        return objectMapper.readValue(json)
     }
 
     // Handler for root endpoint
@@ -91,45 +123,35 @@ class WebServer private constructor() {
                 return@HttpHandler
             }
             "GET" -> {
-//                printBluetooth()
-//                printTcp()
                 sendResponse(exchange, "Welcome to my server")
+                return@HttpHandler
             }
             "POST" -> {
+                var body = PrinterBody()
+
                 handleCorsHeaders(exchange)
-                sendResponse(exchange, "POST is working!")
-//                try {
-//                    // Read the POST request body
-//                    val isr = InputStreamReader(exchange.requestBody, "UTF-8")
-//                    val br = BufferedReader(isr)
-//                    val requestBody = StringBuilder()
-//                    var line: String?
-//                    while (br.readLine().also { line = it } != null) {
-//                        requestBody.append(line)
-//                    }
-//                    br.close()
-//
-//                    // Parse the JSON data from the request body
-//                    val json = requestBody.toString()
-//
-//                    // Now 'json' contains the JSON data as a string. You can parse it further.
-//                    // For example, you can use a JSON library like Jackson to deserialize it into an object.
-//
-//                    // Example using Jackson:
-//                    val objectMapper = jacksonObjectMapper()
-//                    val printerData = objectMapper.readValue<printerBody>(json)
-//
-//                    // Now 'yourObject' contains the parsed JSON data as an object.
-//                    printBluetooth(printerData.data)
-//
-//                    // Respond to the request
-//                    val response = "Received and processed JSON data"
-//                    exchange.sendResponseHeaders(200, response.length.toLong())
-//                    exchange.responseBody.use { os -> os.write(response.toByteArray()) }
-//                } catch (e: IOException) {
-//                    e.printStackTrace()
-//                    // Handle exceptions appropriately
-//                }
+                try {
+                    if (coroutinePrinter!!.printing) {
+                        sendResponse(exchange, "Still printing in background")
+                    }
+
+                    val context = this.context.get()
+                    body = parseBody(exchange)
+
+                    if (context != null) {
+                        coroutinePrinter?.doPrintOnServer(
+                            this.notifications, context,
+                            this.notificationManager!!
+                        )
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    sendResponse(exchange, "Failed with exception")
+                } finally {
+                    sendResponse(exchange, "Print on progress")
+                }
+
+                sendResponse(exchange, body.message)
             }
             else -> {
                 // Handle other request methods or provide a response for unsupported methods

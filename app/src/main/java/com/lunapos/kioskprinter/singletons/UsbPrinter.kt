@@ -122,6 +122,7 @@ class UsbPrinter : AbstractPrinter() {
 //                Log.i("Printer", "USB Printer Permission Denied")
 //            }
 //        }
+
         if (usbConnection != null) {
             try {
                 val printer = EscPosPrinter(

@@ -91,9 +91,11 @@ class MainActivity : AppCompatActivity() {
         serverButton.setOnClickListener {
             serverUp = if(!serverUp){
                 webServer.startServer(serverPort, this, applicationContext, notificationManager!!)
+                webServer.coroutinePrinter = coroutinePrinter
                 true
             } else{
                 webServer.stopServer(applicationContext, this, notificationManager!!)
+                notificationManager!!.cancel(SERVER_NOTIFICATION_ID)
                 false
             }
         }
