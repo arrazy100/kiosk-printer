@@ -114,7 +114,9 @@ class CoroutinePrinter {
     }
 
     fun doPrintOnServer(
-        context: Context
+        notifications: Notifications,
+        context: Context,
+        notificationManager: NotificationManagerCompat,
     ) {
         if (printing) {
             return
@@ -127,12 +129,27 @@ class CoroutinePrinter {
         // Disable the Print
         printing = true
 
+        notifications.showProgressNotification(context, notificationManager, PRINTER_CHANNEL_ID,
+            PRINTER_CHANNEL_NAME, PRINTER_NOTIFICATION_ID, "Printer", "Print Progress")
+
+        val progressArray = calculateProgress(printers.size)
+
         CoroutineScope(Dispatchers.IO).launch {
             val jobs = mutableListOf<Job>()
 
             try {
-                for (printer in printers) {
+                for ((index, printer) in printers.withIndex()) {
                     val job = launch {
+                        val progress = progressArray[index]
+
+                        withContext(Dispatchers.Main) {
+                            notifications.updateProgressNotification(
+                                context,
+                                notificationManager,
+                                progress
+                            )
+                        }
+
                         // Perform printing tasks for the specific printer (on the background thread)
                         printer.print(context)
                     }
@@ -143,7 +160,11 @@ class CoroutinePrinter {
                 // Wait for all coroutines to finish
                 jobs.forEach { it.join() }
 
-                withContext(Dispatchers.IO) {
+                // Cancel the notification (on the main thread)
+                withContext(Dispatchers.Main) {
+                    notificationManager.cancel(PRINTER_NOTIFICATION_ID)
+
+                    // Enable the print
                     printing = false
                 }
             }
