@@ -1,6 +1,7 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
+import android.widget.Button
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,15 @@ class CoroutinePrinter {
         printers.add(printer)
     }
 
-    fun doPrint(notifications: Notifications, context: Context, notificationManager: NotificationManagerCompat) {
+    fun doPrint(
+        notifications: Notifications,
+        context: Context,
+        notificationManager: NotificationManagerCompat,
+        printButton: Button
+    ) {
+        // Disable Button
+        printButton.isEnabled = false
+
         if (printers.isEmpty()) {
             return
         }
@@ -58,6 +67,9 @@ class CoroutinePrinter {
             // Cancel the notification (on the main thread)
             withContext(Dispatchers.Main) {
                 notificationManager.cancel(PRINTER_NOTIFICATION_ID)
+
+                // Enable the button
+                printButton.isEnabled = true
             }
         }
     }

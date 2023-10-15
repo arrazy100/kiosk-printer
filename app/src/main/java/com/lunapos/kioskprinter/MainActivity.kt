@@ -1,14 +1,11 @@
 package com.lunapos.kioskprinter
 
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -29,6 +26,7 @@ import com.lunapos.kioskprinter.singletons.WebServer
 
 class MainActivity : AppCompatActivity() {
     private var serverUp = false
+    private val serverPort = 5000
     private var notificationManager: NotificationManagerCompat? = null
 
     private val webServer = WebServer.getInstance()
@@ -38,42 +36,61 @@ class MainActivity : AppCompatActivity() {
     private val tcpPrinter = TcpPrinter()
     private val coroutinePrinter = CoroutinePrinter.getInstance()
 
-    private val usbReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val action = intent.action
-            if (ACTION_USB_PERMISSION == action) {
-                synchronized(this) {
-                    val device =
-                        intent.getParcelableExtra<Parcelable>(UsbManager.EXTRA_DEVICE) as UsbDevice?
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        Toast.makeText(
-                            context,
-                            "Permission granted for this device",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        Toast.makeText(
-                            context,
-                            "Permission denied for this device",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val port = 5000
-        notificationManager = NotificationManagerCompat.from(applicationContext)
 
         val serverButton: Button = findViewById(R.id.serverButton)
+        val browseBluetoothButton = findViewById<View>(R.id.button_bluetooth_browse) as Button
+        val browseUsbButton = findViewById<View>(R.id.button_usb_browse) as Button
+        val tcpHost = findViewById<EditText>(R.id.tcp_input)
+        val tcpPort = findViewById<EditText>(R.id.port_input)
+        val printButton = findViewById<View>(R.id.bluetooth_print) as Button
+        val textView = findViewById<TextView>(R.id.usb_device)
+
+
+        tcpHost.setText("10.20.30.101")
+        tcpPort.setText("9100")
+
+
+        notificationManager = NotificationManagerCompat.from(applicationContext)
+
+
+        // Register USB Receiver
+        val filter = IntentFilter(ACTION_USB_PERMISSION)
+        registerReceiver(usbReceiver, filter)
+
+
+        // Register Printer
+        bluetoothPrinter.printerDpi = 203
+        bluetoothPrinter.printerWidthMM = 48f
+        bluetoothPrinter.printerNbrCharactersPerLine = 32
+        bluetoothPrinter.text = "[C]Test Bluetooth Printer"
+
+        usbPrinter.usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+        usbPrinter.printerDpi = 203
+        usbPrinter.printerWidthMM = 48f
+        usbPrinter.printerNbrCharactersPerLine = 32
+        usbPrinter.text = "[C]Test USB Printer"
+
+        tcpPrinter.ipAddress = tcpHost.text.toString()
+        tcpPrinter.portAddress = tcpPort.text.toString()
+        tcpPrinter.timeout = 1000
+        tcpPrinter.printerDpi = 203
+        tcpPrinter.printerWidthMM = 48f
+        tcpPrinter.printerNbrCharactersPerLine = 32
+        tcpPrinter.text = "[C]Test TCP Printer"
+
+        coroutinePrinter.addPrinter(bluetoothPrinter)
+        coroutinePrinter.addPrinter(usbPrinter)
+        coroutinePrinter.addPrinter(tcpPrinter)
+
+
+        // Register Button Listener
         serverButton.setOnClickListener {
             serverUp = if(!serverUp){
-                webServer.startServer(port, this, applicationContext, notificationManager!!)
+                webServer.startServer(serverPort, this, applicationContext, notificationManager!!)
                 true
             } else{
                 webServer.stopServer(applicationContext, this, notificationManager!!)
@@ -81,28 +98,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val browseBluetoothButton = findViewById<View>(R.id.button_bluetooth_browse) as Button
+        browseBluetoothButton.setOnClickListener { bluetoothPrinter.browseBluetoothDevice(applicationContext, this) }
 
-        val textView = findViewById<TextView>(R.id.usb_device)
+        browseUsbButton.setOnClickListener { usbPrinter.browseUsb(this, browseUsbButton, textView) }
 
-//        browseBluetoothButton.setOnClickListener { bluetoothPrinter.browseBluetoothDevice(applicationContext, this) }
-        browseBluetoothButton.setOnClickListener { usbPrinter.browseUsb(this, browseBluetoothButton, textView) }
-
-        val printButton = findViewById<View>(R.id.bluetooth_print) as Button
-        printButton.setOnClickListener { coroutinePrinter.doPrint(notifications, applicationContext, notificationManager!!) }
-
-        val tcpHost = findViewById<EditText>(R.id.tcp_input)
-        tcpHost.setText("10.20.30.101")
-
-        val tcpPort = findViewById<EditText>(R.id.port_input)
-        tcpPort.setText("9100")
-
-        usbPrinter.usbManager = getSystemService(USB_SERVICE) as UsbManager
-
-        coroutinePrinter.addPrinter(usbPrinter)
-
-        val filter = IntentFilter(ACTION_USB_PERMISSION)
-        registerReceiver(usbReceiver, filter)
+        printButton.setOnClickListener { coroutinePrinter.doPrint(notifications, applicationContext, notificationManager!!, printButton) }
     }
 
     override fun onDestroy() {
@@ -127,6 +127,29 @@ class MainActivity : AppCompatActivity() {
                 requestCode,
                 grantResults
             )
+        }
+    }
+
+    private val usbReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val action = intent.action
+            if (ACTION_USB_PERMISSION == action) {
+                synchronized(this) {
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        Toast.makeText(
+                            context,
+                            "Permission granted for this device",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Permission denied for this device",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         }
     }
 }

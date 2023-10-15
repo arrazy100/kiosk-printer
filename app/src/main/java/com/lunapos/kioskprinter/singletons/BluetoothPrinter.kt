@@ -134,13 +134,18 @@ class BluetoothPrinter : AbstractPrinter() {
 
     override suspend fun print(context: Context) {
         if (selectedDevice != null) {
-            val printer = EscPosPrinter(
-                this.selectedDevice,
-                this.printerDpi,
-                this.printerWidthMM,
-                this.printerNbrCharactersPerLine
-            )
-            printer.printFormattedTextAndCut(this.text.trimIndent())
+            try {
+                val printer = EscPosPrinter(
+                    this.selectedDevice,
+                    this.printerDpi,
+                    this.printerWidthMM,
+                    this.printerNbrCharactersPerLine
+                )
+                printer.printFormattedTextAndCut(this.text.trimIndent())
+            }
+            catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

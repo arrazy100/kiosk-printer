@@ -14,9 +14,9 @@ class TcpPrinter : AbstractPrinter() {
     ) {
     }
 
-    private val ipAddress: String = ""
-    private val portAddress: String = ""
-    private val timeout: Int = 1000
+    var ipAddress: String = ""
+    var portAddress: String = ""
+    var timeout: Int = 1000
 
     override suspend fun print(context: Context) {
         if (ipAddress.isNotBlank() && portAddress.isNotBlank()) {

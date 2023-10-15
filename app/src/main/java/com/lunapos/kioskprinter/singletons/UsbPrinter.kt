@@ -9,16 +9,16 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Build.VERSION_CODES
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.usb.UsbConnection
 
 
 class UsbPrinter : AbstractPrinter() {
     var usbManager: UsbManager? = null
-    var usbDevice: UsbDevice? = null
+    private var usbDevice: UsbDevice? = null
     private var usbDeviceList: HashMap<String, UsbDevice>? = null
     private var usbConnection: UsbConnection? = null
 
@@ -82,7 +82,7 @@ class UsbPrinter : AbstractPrinter() {
         }
     }
 
-    private fun translateDeviceClass(deviceClass: Int): String? {
+    private fun translateDeviceClass(deviceClass: Int): String {
         return when (deviceClass) {
             UsbConstants.USB_CLASS_APP_SPEC -> "Application specific USB class"
             UsbConstants.USB_CLASS_AUDIO -> "USB class for audio devices"
@@ -114,17 +114,26 @@ class UsbPrinter : AbstractPrinter() {
     }
 
     override suspend fun print(context: Context) {
-        if (usbManager != null && usbDevice != null) {
-            Log.i("Printer", "USB Printer Established")
-        }
-
-//        if (usbConnection != null) {
-//            val printer = EscPosPrinter(
-//                usbConnection, this.printerDpi,
-//                this.printerWidthMM, this.printerNbrCharactersPerLine
-//            )
-//
-//            printer.printFormattedTextAndCut(this.text.trimIndent())
+//        if (usbManager != null && usbDevice != null) {
+//            if (usbManager!!.hasPermission(usbDevice)) {
+//                Log.i("Printer", "USB Printer Established")
+//            }
+//            else {
+//                Log.i("Printer", "USB Printer Permission Denied")
+//            }
 //        }
+        if (usbConnection != null) {
+            try {
+                val printer = EscPosPrinter(
+                    usbConnection, this.printerDpi,
+                    this.printerWidthMM, this.printerNbrCharactersPerLine
+                )
+
+                printer.printFormattedTextAndCut(this.text.trimIndent())
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }
