@@ -19,9 +19,18 @@ class TcpPrinter : AbstractPrinter() {
     private val timeout: Int = 1000
 
     override suspend fun print(context: Context) {
-        val printer = EscPosPrinter(TcpConnection(ipAddress, portAddress.toInt(), timeout),
-            this.printerDpi, this.printerWidthMM, this.printerNbrCharactersPerLine)
+        if (ipAddress.isNotBlank() && portAddress.isNotBlank()) {
+            try {
+                val printer = EscPosPrinter(
+                    TcpConnection(ipAddress, portAddress.toInt(), timeout),
+                    this.printerDpi, this.printerWidthMM, this.printerNbrCharactersPerLine
+                )
 
-        printer.printFormattedTextAndCut(this.text.trimIndent())
+                printer.printFormattedTextAndCut(this.text.trimIndent())
+            }
+            catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }
