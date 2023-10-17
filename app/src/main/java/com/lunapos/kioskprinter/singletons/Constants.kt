@@ -8,3 +8,4 @@ const val PRINTER_CHANNEL_NAME = "Kiosk Printer"
 const val PRINTER_NOTIFICATION_ID = 2
 
 const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
+const val REQUEST_BLUETOOTH_PERMISSION = "com.android.example.BLUETO"

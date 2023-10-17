@@ -14,14 +14,16 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.usb.UsbConnection
-import kotlinx.coroutines.delay
 
 
 class UsbPrinter : AbstractPrinter() {
     var usbManager: UsbManager? = null
-    private var usbDevice: UsbDevice? = null
+    var usbDevice: UsbDevice? = null
     private var usbDeviceList: HashMap<String, UsbDevice>? = null
-    private var usbConnection: UsbConnection? = null
+    var usbConnection: UsbConnection? = null
+
+    var browseButton: Button? = null
+    var usbDeviceInformation: TextView? = null
 
     fun browseUsb(appCompatActivity: AppCompatActivity, button: Button?, textView: TextView?) {
         usbDeviceList = usbManager!!.deviceList
@@ -123,8 +125,6 @@ class UsbPrinter : AbstractPrinter() {
 //                Log.i("Printer", "USB Printer Permission Denied")
 //            }
 //        }
-
-        delay(2000)
 
         if (usbConnection != null) {
             try {

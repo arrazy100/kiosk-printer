@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Bundle
 import android.view.View
@@ -58,8 +59,12 @@ class MainActivity : AppCompatActivity() {
 
 
         // Register USB Receiver
-        val filter = IntentFilter(ACTION_USB_PERMISSION)
-        registerReceiver(usbReceiver, filter)
+        val permissionFilter = IntentFilter(ACTION_USB_PERMISSION)
+        val attachedFilter = IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+        val detachedFilter = IntentFilter(UsbManager.ACTION_USB_DEVICE_DETACHED)
+        registerReceiver(usbReceiver, permissionFilter)
+        registerReceiver(usbReceiver, attachedFilter)
+        registerReceiver(usbReceiver, detachedFilter)
 
 
         // Register Printer
@@ -73,6 +78,8 @@ class MainActivity : AppCompatActivity() {
         usbPrinter.printerWidthMM = 48f
         usbPrinter.printerNbrCharactersPerLine = 32
         usbPrinter.text = "[C]Test USB Printer"
+        usbPrinter.browseButton = browseUsbButton
+        usbPrinter.usbDeviceInformation = textView
 
         tcpPrinter.ipAddress = tcpHost.text.toString()
         tcpPrinter.portAddress = tcpPort.text.toString()
@@ -135,6 +142,7 @@ class MainActivity : AppCompatActivity() {
     private val usbReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
+            val device = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
             if (ACTION_USB_PERMISSION == action) {
                 synchronized(this) {
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
@@ -149,6 +157,32 @@ class MainActivity : AppCompatActivity() {
                             "Permission denied for this device",
                             Toast.LENGTH_SHORT
                         ).show()
+                    }
+                }
+            }
+            else if (UsbManager.ACTION_USB_DEVICE_ATTACHED == action) {
+                Toast.makeText(
+                    context,
+                    "USB device attached",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            else if (UsbManager.ACTION_USB_DEVICE_DETACHED == action) {
+                for (printer in coroutinePrinter.printers) {
+                    if (printer !is UsbPrinter) continue
+
+                    if (usbPrinter.usbDevice != null) {
+                        if (usbPrinter.usbDevice == device) {
+                            Toast.makeText(
+                                context,
+                                "Usb device detached",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        printer.usbConnection = null
+                        printer.browseButton!!.text = "Browse USB"
+                        printer.usbDeviceInformation!!.text = ""
                     }
                 }
             }

@@ -139,6 +139,9 @@ class WebServer private constructor() {
                     body = parseBody(exchange)
 
                     if (context != null) {
+                        for (print in coroutinePrinter!!.printers) {
+                            print.text = body.message
+                        }
                         coroutinePrinter?.doPrintOnServer(
                             notifications,
                             context,
