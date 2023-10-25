@@ -51,5 +51,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
     implementation("com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.+")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
 }

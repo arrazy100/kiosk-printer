@@ -1,7 +1,6 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
-import android.util.Printer
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
