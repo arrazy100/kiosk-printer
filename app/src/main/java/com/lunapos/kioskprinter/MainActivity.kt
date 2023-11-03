@@ -7,14 +7,20 @@ import android.content.IntentFilter
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
+import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.lunapos.kioskprinter.adapters.PrinterEmptyListAdapter
+import com.lunapos.kioskprinter.adapters.PrinterListAdapter
 import com.lunapos.kioskprinter.singletons.ACTION_USB_PERMISSION
+import com.lunapos.kioskprinter.singletons.AbstractPrinter
 import com.lunapos.kioskprinter.singletons.BluetoothPrinter
 import com.lunapos.kioskprinter.singletons.CoroutinePrinter
 import com.lunapos.kioskprinter.singletons.Notifications
@@ -40,19 +46,19 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setSupportActionBar(findViewById(R.id.kiosk_appbar))
+
+        val serverSwitch: SwitchCompat = findViewById(R.id.server_switch)
+//        val browseBluetoothButton = findViewById<View>(R.id.button_bluetooth_browse) as Button
+//        val browseUsbButton = findViewById<View>(R.id.button_usb_browse) as Button
+//        val tcpHost = findViewById<EditText>(R.id.tcp_input)
+//        val tcpPort = findViewById<EditText>(R.id.port_input)
+//        val printButton = findViewById<View>(R.id.bluetooth_print) as Button
+//        val textView = findViewById<TextView>(R.id.usb_device)
 
 
-        val serverButton: Button = findViewById(R.id.serverButton)
-        val browseBluetoothButton = findViewById<View>(R.id.button_bluetooth_browse) as Button
-        val browseUsbButton = findViewById<View>(R.id.button_usb_browse) as Button
-        val tcpHost = findViewById<EditText>(R.id.tcp_input)
-        val tcpPort = findViewById<EditText>(R.id.port_input)
-        val printButton = findViewById<View>(R.id.bluetooth_print) as Button
-        val textView = findViewById<TextView>(R.id.usb_device)
-
-
-        tcpHost.setText("10.20.30.101")
-        tcpPort.setText("9100")
+//        tcpHost.setText("10.20.30.101")
+//        tcpPort.setText("9100")
 
 
         notificationManager = NotificationManagerCompat.from(applicationContext)
@@ -68,21 +74,24 @@ class MainActivity : AppCompatActivity() {
 
 
         // Register Printer
+        bluetoothPrinter.name = "Bluetooth Printer"
         bluetoothPrinter.printerDpi = 203
         bluetoothPrinter.printerWidthMM = 48f
         bluetoothPrinter.printerNbrCharactersPerLine = 32
         bluetoothPrinter.text = "[C]Test Bluetooth Printer"
 
-        usbPrinter.usbManager = getSystemService(Context.USB_SERVICE) as UsbManager
+        usbPrinter.name = "USB Printer"
+        usbPrinter.usbManager = getSystemService(USB_SERVICE) as UsbManager
         usbPrinter.printerDpi = 203
         usbPrinter.printerWidthMM = 48f
         usbPrinter.printerNbrCharactersPerLine = 32
         usbPrinter.text = "[C]Test USB Printer"
-        usbPrinter.browseButton = browseUsbButton
-        usbPrinter.usbDeviceInformation = textView
+//        usbPrinter.browseButton = browseUsbButton
+//        usbPrinter.usbDeviceInformation = textView
 
-        tcpPrinter.ipAddress = tcpHost.text.toString()
-        tcpPrinter.portAddress = tcpPort.text.toString()
+        tcpPrinter.name = "TCP Printer"
+        tcpPrinter.ipAddress = "10.20.30.101"
+        tcpPrinter.portAddress = "5001"
         tcpPrinter.timeout = 1000
         tcpPrinter.printerDpi = 203
         tcpPrinter.printerWidthMM = 48f
@@ -93,30 +102,50 @@ class MainActivity : AppCompatActivity() {
         coroutinePrinter.addPrinter(usbPrinter)
         coroutinePrinter.addPrinter(tcpPrinter)
 
+//        val dataset = coroutinePrinter.printers
+        val emptyList: MutableList<AbstractPrinter> = mutableListOf()
+        val printerListView: RecyclerView = findViewById(R.id.printer_list_view)
+        val emptyPrinterListView: View = findViewById(R.id.empty_printer_list_view)
+        val printerListAdapter = PrinterListAdapter(emptyList)
+        val printerEmptyListAdapter = PrinterEmptyListAdapter(printerListView, emptyPrinterListView)
+        printerListView.adapter = printerListAdapter
+        printerListView.layoutManager = LinearLayoutManager(this)
+        printerListAdapter.registerAdapterDataObserver(printerEmptyListAdapter)
 
-        // Register Button Listener
-        serverButton.setOnClickListener {
-            serverUp = if(!serverUp){
-                webServer.startServer(serverPort, this, applicationContext, notificationManager!!)
+        if (emptyList.isEmpty()) {
+            printerListView.visibility = View.GONE
+            emptyPrinterListView.visibility = View.VISIBLE
+        }
+
+        val btnAddPrinter = findViewById<Button>(R.id.btn_add_printer)
+        btnAddPrinter.setOnClickListener {
+            emptyList.add(bluetoothPrinter)
+            printerListAdapter.notifyDataSetChanged()
+        }
+
+        // Register Server switch listener
+        serverSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
+            if (isChecked) {
+                serverUp = true
+                webServer.startServer(serverPort, this, notificationManager!!)
                 webServer.coroutinePrinter = coroutinePrinter
-                true
-            } else{
-                webServer.stopServer(applicationContext, this, notificationManager!!)
+            } else {
+                serverUp = false
+                webServer.stopServer(this, notificationManager!!)
                 notificationManager!!.cancel(SERVER_NOTIFICATION_ID)
-                false
             }
         }
 
-        browseBluetoothButton.setOnClickListener { bluetoothPrinter.browseBluetoothDevice(applicationContext, this) }
+//        browseBluetoothButton.setOnClickListener { bluetoothPrinter.browseBluetoothDevice(applicationContext, this) }
 
-        browseUsbButton.setOnClickListener { usbPrinter.browseUsb(this, browseUsbButton, textView) }
+//        browseUsbButton.setOnClickListener { usbPrinter.browseUsb(this, browseUsbButton, textView) }
 
-        printButton.setOnClickListener { coroutinePrinter.doPrint(notifications, applicationContext, notificationManager!!, printButton) }
+//        printButton.setOnClickListener { coroutinePrinter.doPrint(notifications, applicationContext, notificationManager!!, printButton) }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        webServer.stopServer(applicationContext, this, notificationManager!!)
+        webServer.stopServer(this, notificationManager!!)
         notificationManager!!.cancel(SERVER_NOTIFICATION_ID)
         notificationManager!!.cancel(PRINTER_NOTIFICATION_ID)
         unregisterReceiver(usbReceiver)

@@ -121,9 +121,9 @@ class BluetoothPrinter : AbstractPrinter() {
                         } else {
                             bluetoothDevicesList[index]
                         }
-                        val button =
-                            appCompatActivity.findViewById<View>(R.id.button_bluetooth_browse) as Button
-                        button.text = items[i1]
+//                        val button =
+//                            appCompatActivity.findViewById<View>(R.id.button_bluetooth_browse) as Button
+//                        button.text = items[i1]
                     }
                     val alert: AlertDialog = alertDialog.create()
                     alert.setCanceledOnTouchOutside(false)

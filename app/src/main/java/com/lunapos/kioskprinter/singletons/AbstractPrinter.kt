@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.CoroutineScope
 
 abstract class AbstractPrinter {
+    var name: String = ""
     var printerDpi: Int = 0
     var printerWidthMM: Float = 0f
     var printerNbrCharactersPerLine: Int = 0

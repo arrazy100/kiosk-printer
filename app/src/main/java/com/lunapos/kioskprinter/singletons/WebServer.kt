@@ -1,12 +1,10 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
-import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.lunapos.kioskprinter.R
 import com.lunapos.kioskprinter.dtos.PrinterBody
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
@@ -36,7 +34,7 @@ class WebServer private constructor() {
     private var mHttpServer: HttpServer? = null
     private val notifications = Notifications.getInstance()
 
-    fun startServer(port: Int, appCompatActivity: AppCompatActivity, context: Context, notificationManager: NotificationManagerCompat) = try {
+    fun startServer(port: Int, context: Context, notificationManager: NotificationManagerCompat) = try {
         this.context = WeakReference(context)
         this.notificationManager = notificationManager
 
@@ -50,9 +48,6 @@ class WebServer private constructor() {
         if (serverAddress != null) {
             println("Server is running on $serverAddress:$port")
 
-            val serverButton: Button = appCompatActivity.findViewById(R.id.serverButton)
-            serverButton.text = "Stop Server"
-
             notifications.showStickyNotification(context, notificationManager, SERVER_CHANNEL_ID,
                 SERVER_CHANNEL_NAME, SERVER_NOTIFICATION_ID, "Server", "Server is running")
         } else {
@@ -63,11 +58,9 @@ class WebServer private constructor() {
         // Handle the exception more gracefully if needed
     }
 
-    fun stopServer(context: Context, appCompatActivity: AppCompatActivity, notificationManager: NotificationManagerCompat) {
+    fun stopServer(context: Context, notificationManager: NotificationManagerCompat) {
         mHttpServer?.stop(0)
         println("Server is stop running")
-        val serverButton: Button = appCompatActivity.findViewById(R.id.serverButton)
-        serverButton.text = "Start Server"
 
         notifications.stopStickyNotification(context, notificationManager, SERVER_CHANNEL_ID,
             SERVER_NOTIFICATION_ID, "Server", "Server is stop running")
