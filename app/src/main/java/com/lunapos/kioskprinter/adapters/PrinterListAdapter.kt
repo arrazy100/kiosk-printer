@@ -15,13 +15,15 @@ class PrinterListAdapter(private val dataSet: MutableList<AbstractPrinter>) : Re
          * (custom ViewHolder)
          */
         class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val textView: TextView
-            val button: Button
+            val title: TextView
+            val testPrintButton: Button
+            val deleteButton: Button
 
             init {
                 // Define click listener for the ViewHolder's View
-                textView = view.findViewById(R.id.textView)
-                button = view.findViewById(R.id.buttonView)
+                title = view.findViewById(R.id.title)
+                testPrintButton = view.findViewById(R.id.btn_test_print)
+                deleteButton = view.findViewById(R.id.btn_delete)
             }
         }
 
@@ -39,9 +41,9 @@ class PrinterListAdapter(private val dataSet: MutableList<AbstractPrinter>) : Re
 
             // Get element from your dataset at this position and replace the
             // contents of the view with that element
-            viewHolder.textView.text = dataSet[position].name
+            viewHolder.title.text = dataSet[position].name
 
-            viewHolder.button.setOnClickListener {
+            viewHolder.deleteButton.setOnClickListener {
                 dataSet.removeAt(position)
                 notifyDataSetChanged()
             }

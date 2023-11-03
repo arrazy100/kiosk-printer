@@ -26,7 +26,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:theme="@style/Base.Theme.KioskPrinter">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

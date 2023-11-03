@@ -2,15 +2,19 @@ package com.lunapos.kioskprinter.adapters
 
 import android.util.Log
 import android.view.View
+import android.widget.Button
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 
-class PrinterEmptyListAdapter constructor(rv: RecyclerView?, ev: View?): RecyclerView.AdapterDataObserver() {
+class PrinterEmptyListAdapter constructor(rv: RecyclerView?, ev: View?, button: Button?): RecyclerView.AdapterDataObserver() {
     private var emptyView: View? = null
     private var recyclerView: RecyclerView? = null
+    private var button: Button? = null
 
     init {
-        recyclerView = rv
-        emptyView = ev
+        this.recyclerView = rv
+        this.emptyView = ev
+        this.button = button
         checkIfEmpty()
     }
 
@@ -18,10 +22,10 @@ class PrinterEmptyListAdapter constructor(rv: RecyclerView?, ev: View?): Recycle
         if (emptyView != null && recyclerView!!.adapter != null) {
             val emptyViewVisible = recyclerView!!.adapter!!.itemCount == 0
 
-            Log.i("dataset:", recyclerView!!.adapter!!.itemCount.toString())
-
             emptyView!!.visibility = if (emptyViewVisible) View.VISIBLE else View.GONE
             recyclerView!!.visibility = if (emptyViewVisible) View.GONE else View.VISIBLE
+
+            button!!.visibility = if (emptyViewVisible) View.GONE else View.VISIBLE
         }
     }
 

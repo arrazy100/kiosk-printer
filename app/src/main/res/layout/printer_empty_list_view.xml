@@ -18,7 +18,7 @@
         app:layout_constraintVertical_bias="0.5" />
 
     <Button
-        android:id="@+id/btn_add_printer"
+        android:id="@+id/btn_add_printer_empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Tambah Printer"

@@ -38,10 +38,11 @@ class MainActivity : AppCompatActivity() {
 
     private val webServer = WebServer.getInstance()
     private val notifications = Notifications.getInstance()
+    private val coroutinePrinter = CoroutinePrinter.getInstance()
     private val bluetoothPrinter = BluetoothPrinter()
     private val usbPrinter = UsbPrinter()
     private val tcpPrinter = TcpPrinter()
-    private val coroutinePrinter = CoroutinePrinter.getInstance()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,26 +103,17 @@ class MainActivity : AppCompatActivity() {
         coroutinePrinter.addPrinter(usbPrinter)
         coroutinePrinter.addPrinter(tcpPrinter)
 
-//        val dataset = coroutinePrinter.printers
-        val emptyList: MutableList<AbstractPrinter> = mutableListOf()
+        val dataset = coroutinePrinter.printers
         val printerListView: RecyclerView = findViewById(R.id.printer_list_view)
         val emptyPrinterListView: View = findViewById(R.id.empty_printer_list_view)
-        val printerListAdapter = PrinterListAdapter(emptyList)
-        val printerEmptyListAdapter = PrinterEmptyListAdapter(printerListView, emptyPrinterListView)
+        val btnAddPrinter = findViewById<Button>(R.id.btn_add_printer)
+        val printerListAdapter = PrinterListAdapter(dataset)
+        val printerEmptyListAdapter = PrinterEmptyListAdapter(printerListView, emptyPrinterListView, btnAddPrinter)
         printerListView.adapter = printerListAdapter
         printerListView.layoutManager = LinearLayoutManager(this)
         printerListAdapter.registerAdapterDataObserver(printerEmptyListAdapter)
 
-        if (emptyList.isEmpty()) {
-            printerListView.visibility = View.GONE
-            emptyPrinterListView.visibility = View.VISIBLE
-        }
-
-        val btnAddPrinter = findViewById<Button>(R.id.btn_add_printer)
-        btnAddPrinter.setOnClickListener {
-            emptyList.add(bluetoothPrinter)
-            printerListAdapter.notifyDataSetChanged()
-        }
+        printerListAdapter.notifyDataSetChanged()
 
         // Register Server switch listener
         serverSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
