@@ -128,6 +128,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnAddPrinter.setOnClickListener {
+            val intent = Intent(this, PrinterInputForm::class.java)
+            startActivity(intent)
+        }
+
 //        browseBluetoothButton.setOnClickListener { bluetoothPrinter.browseBluetoothDevice(applicationContext, this) }
 
 //        browseUsbButton.setOnClickListener { usbPrinter.browseUsb(this, browseUsbButton, textView) }

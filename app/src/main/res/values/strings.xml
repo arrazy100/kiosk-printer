@@ -11,4 +11,8 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="empty_list_text">Empty List</string>
+    <string name="add_printer_text">+ Tambah Printer</string>
+    <string name="no_printer_text">Wahhh... belum ada printer yang disetup, silahkan tambah printer</string>
+    <string name="add_printer_title">Tambah Printer</string>
 </resources>

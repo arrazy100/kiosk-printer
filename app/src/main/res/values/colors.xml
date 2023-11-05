@@ -5,4 +5,5 @@
     <color name="primary">#53387D</color>
     <color name="charcoal">#C9C9C9</color>
     <color name="error">#EB5757</color>
+    <color name="success">#ABD94A</color>
 </resources>
