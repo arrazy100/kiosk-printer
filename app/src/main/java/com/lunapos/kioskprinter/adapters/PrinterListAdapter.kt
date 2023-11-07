@@ -1,54 +1,122 @@
 package com.lunapos.kioskprinter.adapters
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
+import com.lunapos.kioskprinter.PrinterInputForm
 import com.lunapos.kioskprinter.R
-import com.lunapos.kioskprinter.singletons.AbstractPrinter
+import com.lunapos.kioskprinter.singletons.FORM_EDIT_KEY
+import com.lunapos.kioskprinter.singletons.PrinterData
+import com.lunapos.kioskprinter.singletons.SharedPrefsManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class PrinterListAdapter(private val dataSet: MutableList<AbstractPrinter>) : RecyclerView.Adapter<PrinterListAdapter.ViewHolder>() {
-        /**
-         * Provide a reference to the type of views that you are using
-         * (custom ViewHolder)
-         */
-        class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val title: TextView
-            val testPrintButton: Button
-            val deleteButton: Button
+class PrinterListAdapter(private val context: Context, private val resultLauncher: ActivityResultLauncher<Intent>, private val dataSet: MutableList<PrinterData>) : RecyclerView.Adapter<PrinterListAdapter.ViewHolder>() {
+    /**
+     * Provide a reference to the type of views that you are using
+     * (custom ViewHolder)
+     */
+    private var printing = false
 
-            init {
-                // Define click listener for the ViewHolder's View
-                title = view.findViewById(R.id.title)
-                testPrintButton = view.findViewById(R.id.btn_test_print)
-                deleteButton = view.findViewById(R.id.btn_delete)
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView
+        val selectedPrinter: AutoCompleteTextView
+        val testPrintButton: Button
+        val deleteButton: Button
+
+        init {
+            // Define click listener for the ViewHolder's View
+            title = view.findViewById(R.id.title)
+            selectedPrinter = view.findViewById(R.id.et_printer_name)
+            testPrintButton = view.findViewById(R.id.btn_test_print)
+            deleteButton = view.findViewById(R.id.btn_delete)
+        }
+    }
+
+    // Create new views (invoked by the layout manager)
+    override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
+        // Create a new view, which defines the UI of the list item
+        val view = LayoutInflater.from(viewGroup.context)
+            .inflate(R.layout.printer_list_view, viewGroup, false)
+
+        return ViewHolder(view)
+    }
+
+    // Replace the contents of a view (invoked by the layout manager)
+    override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
+
+        // Get element from your dataset at this position and replace the
+        // contents of the view with that element
+        dataSet[position].id = position
+
+        viewHolder.title.text = dataSet[position].name
+
+        viewHolder.selectedPrinter.setText(dataSet[position].printerName)
+
+        viewHolder.selectedPrinter.setOnClickListener {
+            val gson = Gson()
+            val converted = gson.toJson(dataSet[position])
+            val intent = Intent(context, PrinterInputForm::class.java)
+            intent.putExtra(FORM_EDIT_KEY, converted)
+            resultLauncher.launch(intent)
+        }
+
+        viewHolder.testPrintButton.setOnClickListener {
+            doPrint(dataSet[position], viewHolder.testPrintButton)
+        }
+
+        viewHolder.deleteButton.setOnClickListener {
+            SharedPrefsManager.removeListAt(position)
+
+            dataSet.removeAt(position)
+            notifyDataSetChanged()
+        }
+    }
+
+    // Return the size of your dataset (invoked by the layout manager)
+    override fun getItemCount() = dataSet.size
+
+    private fun doPrint(printer : PrinterData, button : Button) {
+        printing = true
+        button.isEnabled = false
+
+        Log.i("Data", "Kepencet sih")
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                launch {
+                    printer.text = "Tes"
+                    printer.print(context)
+                }
+
+                withContext(Dispatchers.Main) {
+                    // Enable the button
+                    button.isEnabled = true
+
+                    // Enable the print
+                    printing = false
+                }
+            }
+            catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    button.isEnabled = true
+                }
+            }
+            finally {
+                printing = false
             }
         }
-
-        // Create new views (invoked by the layout manager)
-        override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
-            // Create a new view, which defines the UI of the list item
-            val view = LayoutInflater.from(viewGroup.context)
-                .inflate(R.layout.printer_list_view, viewGroup, false)
-
-            return ViewHolder(view)
-        }
-
-        // Replace the contents of a view (invoked by the layout manager)
-        override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-
-            // Get element from your dataset at this position and replace the
-            // contents of the view with that element
-            viewHolder.title.text = dataSet[position].name
-
-            viewHolder.deleteButton.setOnClickListener {
-                dataSet.removeAt(position)
-                notifyDataSetChanged()
-            }
-        }
-
-        // Return the size of your dataset (invoked by the layout manager)
-        override fun getItemCount() = dataSet.size
+    }
 }

@@ -1,0 +1,109 @@
+package com.lunapos.kioskprinter.singletons
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.hardware.usb.UsbManager
+import androidx.appcompat.app.AppCompatActivity
+import com.dantsu.escposprinter.EscPosPrinter
+import com.dantsu.escposprinter.connection.DeviceConnection
+import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
+import com.dantsu.escposprinter.connection.tcp.TcpConnection
+import com.dantsu.escposprinter.connection.usb.UsbConnection
+import com.lunapos.kioskprinter.enums.AutoCutEnum
+import com.lunapos.kioskprinter.enums.PaperSizeEnum
+import com.lunapos.kioskprinter.enums.PrinterModuleEnum
+import com.lunapos.kioskprinter.enums.PrinterTypeEnum
+
+class PrinterData {
+    var id: Int? = null
+    var name: String = ""
+    private val printerDpi: Int = 203
+    var printerWidthMM: Float = 0f
+    var printerNbrCharactersPerLine: Int = 0
+    var text: String = ""
+    private val timeout: Int = 1000
+
+    var printerType: PrinterTypeEnum? = null
+    var printerModule: PrinterModuleEnum? = null
+    var paperSize: PaperSizeEnum? = null
+    var autoCut: AutoCutEnum? = null
+    var disconnectAfterPrint: Boolean? = null
+    var printCopy: Int? = null
+
+    var macAddress: String? = null
+    var networkAddress: String? = null
+    var usbProductId: Int? = null
+    var usbVendorId: Int? = null
+
+    var printerName: String? = null
+    private var bluetoothConnection: BluetoothConnection? = null
+    private var networkConnection: TcpConnection? = null
+    private var usbConnection: UsbConnection? = null
+
+    fun retrieveDeviceConnection(context: Context, appCompatActivity: AppCompatActivity) {
+        if (printerModule?.equals(PrinterModuleEnum.Network) == true) {
+            val address = networkAddress?.split(":")
+            networkConnection = TcpConnection(address?.get(0), address?.get(1)!!.toInt(), timeout)
+        }
+        else if (printerModule?.equals(PrinterModuleEnum.Bluetooth) == true) {
+            bluetoothConnection = BluetoothPrinterPermissions.retrieveBluetoothDevice(macAddress, context, appCompatActivity)
+        }
+        else if (printerModule?.equals(PrinterModuleEnum.USB) == true) {
+            val usbManager = context.getSystemService(AppCompatActivity.USB_SERVICE) as UsbManager
+            val usbDevice = USBPrinterPermission.retrieveUsbDevice(usbProductId!!, usbVendorId!!, context, appCompatActivity)
+            usbConnection = UsbConnection(usbManager, usbDevice)
+        }
+        else {
+            throw Exception("Modul printer tidak valid")
+        }
+    }
+
+    suspend fun print(context: Context) {
+        var connection: DeviceConnection? = null
+
+        if (printerModule?.equals(PrinterModuleEnum.Network) == true) {
+            if (networkConnection != null) {
+                connection = networkConnection
+            }
+        }
+        else if (printerModule?.equals(PrinterModuleEnum.Bluetooth) == true) {
+            if (bluetoothConnection != null) {
+                connection = bluetoothConnection
+            }
+        }
+        else if (printerModule?.equals(PrinterModuleEnum.USB) == true) {
+            if (usbConnection != null) {
+                connection = usbConnection
+            }
+        }
+        else {
+            throw Exception("Modul printer tidak valid")
+        }
+
+        if (connection != null) {
+            try {
+                val printer = EscPosPrinter(
+                    connection, this.printerDpi,
+                    this.printerWidthMM, this.printerNbrCharactersPerLine
+                )
+
+                printer.printFormattedTextAndCut(this.text.trimIndent())
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getPrinter(): String {
+        return if (printerModule?.equals(PrinterModuleEnum.Network) == true) {
+            networkAddress.toString()
+        } else if (printerModule?.equals(PrinterModuleEnum.Bluetooth) == true) {
+            bluetoothConnection!!.device.name
+        } else if (printerModule?.equals(PrinterModuleEnum.USB) == true) {
+            usbConnection!!.device.deviceName
+        } else {
+            throw Exception("Modul printer tidak valid")
+        }
+    }
+}

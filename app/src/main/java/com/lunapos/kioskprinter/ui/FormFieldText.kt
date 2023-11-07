@@ -64,6 +64,7 @@ class FormFieldText(
         if (!isVisible) {
             return true
         }
+
         val errorValue = try {
             validation(stateInternal.value)
         } catch (error: Throwable) {

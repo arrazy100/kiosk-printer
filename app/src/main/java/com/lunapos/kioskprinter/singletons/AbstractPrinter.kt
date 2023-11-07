@@ -1,7 +1,9 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
+import android.hardware.usb.UsbDevice
 import androidx.appcompat.app.AppCompatActivity
+import com.lunapos.kioskprinter.enums.PrinterModuleEnum
 import kotlinx.coroutines.CoroutineScope
 
 abstract class AbstractPrinter {
@@ -11,13 +13,12 @@ abstract class AbstractPrinter {
     var printerNbrCharactersPerLine: Int = 0
     var text: String = ""
 
-    val coroutineScope: CoroutineScope? = null
-
     abstract fun onRequestPermissionsResult(
         context: Context,
         appCompatActivity: AppCompatActivity,
         requestCode: Int,
         grantResults: IntArray
     )
+
     abstract suspend fun print(context: Context)
 }

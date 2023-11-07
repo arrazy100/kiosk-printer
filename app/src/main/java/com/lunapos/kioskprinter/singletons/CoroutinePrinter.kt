@@ -21,10 +21,10 @@ class CoroutinePrinter {
             }
     }
 
-    val printers = mutableListOf<AbstractPrinter>()
+    var printers = mutableListOf<PrinterData>()
     var printing = false
 
-    fun addPrinter(printer : AbstractPrinter) {
+    fun addPrinter(printer: PrinterData) {
         printers.add(printer)
     }
 

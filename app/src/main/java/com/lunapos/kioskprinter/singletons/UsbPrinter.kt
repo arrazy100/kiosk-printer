@@ -12,6 +12,7 @@ import android.os.Build.VERSION_CODES
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.getSystemService
 import com.dantsu.escposprinter.EscPosPrinter
 import com.dantsu.escposprinter.connection.usb.UsbConnection
 
@@ -24,6 +25,11 @@ class UsbPrinter : AbstractPrinter() {
 
     var browseButton: Button? = null
     var usbDeviceInformation: TextView? = null
+
+    fun retrieveUsb(productId: Int, vendorId: Int, context: Context, appCompatActivity: AppCompatActivity) {
+        val usbManager = context.getSystemService(AppCompatActivity.USB_SERVICE) as UsbManager
+        usbManager.deviceList
+    }
 
     fun browseUsb(appCompatActivity: AppCompatActivity, button: Button?, textView: TextView?) {
         usbDeviceList = usbManager!!.deviceList
@@ -117,15 +123,6 @@ class UsbPrinter : AbstractPrinter() {
     }
 
     override suspend fun print(context: Context) {
-//        if (usbManager != null && usbDevice != null) {
-//            if (usbManager!!.hasPermission(usbDevice)) {
-//                Log.i("Printer", "USB Printer Established")
-//            }
-//            else {
-//                Log.i("Printer", "USB Printer Permission Denied")
-//            }
-//        }
-
         if (usbConnection != null) {
             try {
                 val printer = EscPosPrinter(

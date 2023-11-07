@@ -1,9 +1,7 @@
 package com.lunapos.kioskprinter.adapters
 
-import android.util.Log
 import android.view.View
 import android.widget.Button
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 
 class PrinterEmptyListAdapter constructor(rv: RecyclerView?, ev: View?, button: Button?): RecyclerView.AdapterDataObserver() {
@@ -15,6 +13,7 @@ class PrinterEmptyListAdapter constructor(rv: RecyclerView?, ev: View?, button: 
         this.recyclerView = rv
         this.emptyView = ev
         this.button = button
+
         checkIfEmpty()
     }
 
