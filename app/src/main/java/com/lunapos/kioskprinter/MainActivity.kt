@@ -1,25 +1,28 @@
 package com.lunapos.kioskprinter
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.CompoundButton
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
+import com.google.android.material.snackbar.Snackbar
 import com.lunapos.kioskprinter.adapters.PrinterEmptyListAdapter
 import com.lunapos.kioskprinter.adapters.PrinterListAdapter
 import com.lunapos.kioskprinter.singletons.ACTION_USB_PERMISSION
@@ -28,7 +31,6 @@ import com.lunapos.kioskprinter.singletons.CoroutinePrinter
 import com.lunapos.kioskprinter.singletons.PRINTER_ADDED_KEY
 import com.lunapos.kioskprinter.singletons.PRINTER_NOTIFICATION_ID
 import com.lunapos.kioskprinter.singletons.PRINTER_UPDATED_KEY
-import com.lunapos.kioskprinter.singletons.PrinterData
 import com.lunapos.kioskprinter.singletons.SERVER_NOTIFICATION_ID
 import com.lunapos.kioskprinter.singletons.SharedPrefsManager
 import com.lunapos.kioskprinter.singletons.WebServer
@@ -51,8 +53,7 @@ class MainActivity : AppCompatActivity() {
             val newPrinter = result.data!!.getStringExtra(PRINTER_ADDED_KEY)
 
             if (newPrinter != null) {
-                val gson = Gson()
-                val newPrinterObj = gson.fromJson(newPrinter, PrinterData::class.java)
+                val newPrinterObj = SharedPrefsManager.readFromJSON(newPrinter)
                 coroutinePrinter.printers.add(newPrinterObj)
 
                 printerListAdapter!!.notifyDataSetChanged()
@@ -63,8 +64,7 @@ class MainActivity : AppCompatActivity() {
             val updatedPrinter = result.data!!.getStringExtra(PRINTER_UPDATED_KEY)
 
             if (updatedPrinter != null) {
-                val gson = Gson()
-                val newPrinterObj = gson.fromJson(updatedPrinter, PrinterData::class.java)
+                val newPrinterObj = SharedPrefsManager.readFromJSON(updatedPrinter)
                 coroutinePrinter.printers[newPrinterObj.id!!] = newPrinterObj
 
                 printerListAdapter!!.notifyDataSetChanged()
@@ -74,17 +74,40 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (it) {
+            // permission granted
+        } else {
+            Snackbar.make(
+                findViewById<View>(android.R.id.content).rootView,
+                "Please grant Notification permission from App Settings",
+                Snackbar.LENGTH_LONG
+            ).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.kiosk_appbar))
+
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            // permission granted
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
 
         SharedPrefsManager.init(applicationContext)
 
         val serverSwitch: SwitchCompat = findViewById(R.id.server_switch)
 
         notificationManager = NotificationManagerCompat.from(applicationContext)
-
 
         // Register USB Receiver
         val permissionFilter = IntentFilter(ACTION_USB_PERMISSION)
@@ -163,32 +186,45 @@ class MainActivity : AppCompatActivity() {
             if (ACTION_USB_PERMISSION == action) {
                 synchronized(this) {
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        Toast.makeText(
-                            context,
-                            "Permission granted for this device",
-                            Toast.LENGTH_SHORT
+                        Snackbar.make(
+                            findViewById<View>(android.R.id.content).rootView,
+                            "Permission granted for this USB",
+                            Snackbar.LENGTH_LONG
                         ).show()
                     } else {
-                        Toast.makeText(
-                            context,
-                            "Permission denied for this device",
-                            Toast.LENGTH_SHORT
+                        Snackbar.make(
+                            findViewById<View>(android.R.id.content).rootView,
+                            "Permission denied for this USB",
+                            Snackbar.LENGTH_LONG
                         ).show()
                     }
                 }
             }
             else if (UsbManager.ACTION_USB_DEVICE_ATTACHED == action) {
-                Toast.makeText(
-                    context,
+                Snackbar.make(
+                    findViewById<View>(android.R.id.content).rootView,
                     "USB device attached",
-                    Toast.LENGTH_SHORT
+                    Snackbar.LENGTH_LONG
                 ).show()
+
+                var appCompatActivity: AppCompatActivity? = null
+                if (context is AppCompatActivity) {
+                    appCompatActivity = context
+                }
+
+                coroutinePrinter.printers.forEach { printer ->
+                    if (appCompatActivity == null || device == null) return
+
+                    if ((printer.usbProductId != null) && (printer.usbProductId == device.productId)) {
+                        printer.retrieveDeviceConnection(applicationContext, appCompatActivity)
+                    }
+                }
             }
             else if (UsbManager.ACTION_USB_DEVICE_DETACHED == action) {
-                Toast.makeText(
-                    context,
-                    "Usb device detached",
-                    Toast.LENGTH_SHORT
+                Snackbar.make(
+                    findViewById<View>(android.R.id.content).rootView,
+                    "USB device detached",
+                    Snackbar.LENGTH_LONG
                 ).show()
             }
         }

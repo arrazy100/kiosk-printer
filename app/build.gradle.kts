@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.lunapos.kioskprinter"
         minSdk = 16
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -58,5 +58,4 @@ dependencies {
     implementation("com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("io.github.reactivecircus.flowbinding:flowbinding-android:1.2.0")
-    implementation("com.google.code.gson:gson:1.7.1")
 }

@@ -10,8 +10,8 @@ import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
 import com.lunapos.kioskprinter.PrinterInputForm
 import com.lunapos.kioskprinter.R
 import com.lunapos.kioskprinter.singletons.FORM_EDIT_KEY
@@ -65,8 +65,8 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         viewHolder.selectedPrinter.setText(dataSet[position].printerName)
 
         viewHolder.selectedPrinter.setOnClickListener {
-            val gson = Gson()
-            val converted = gson.toJson(dataSet[position])
+            val converted = SharedPrefsManager.writeAsJSON(dataSet[position])
+
             val intent = Intent(context, PrinterInputForm::class.java)
             intent.putExtra(FORM_EDIT_KEY, converted)
             resultLauncher.launch(intent)
@@ -77,10 +77,7 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         }
 
         viewHolder.deleteButton.setOnClickListener {
-            SharedPrefsManager.removeListAt(position)
-
-            dataSet.removeAt(position)
-            notifyDataSetChanged()
+            showAlertDialog(position)
         }
     }
 
@@ -118,5 +115,31 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
                 printing = false
             }
         }
+    }
+
+    private fun showAlertDialog(position: Int) {
+        // Create and show the AlertDialog here, similar to the previous example
+        val inflater = LayoutInflater.from(context)
+        val view = inflater.inflate(R.layout.alert_dialog, null)
+        val positiveButton = view.findViewById<Button>(R.id.positiveButton)
+        val negativeButton = view.findViewById<Button>(R.id.negativeButton)
+
+        val alertDialog = AlertDialog.Builder(context)
+            .setView(view)
+            .create()
+
+        positiveButton.setOnClickListener {
+            alertDialog.dismiss()
+            SharedPrefsManager.removeListAt(position)
+
+            dataSet.removeAt(position)
+            notifyDataSetChanged()
+        }
+
+        negativeButton.setOnClickListener {
+            alertDialog.dismiss()
+        }
+
+        alertDialog.show()
     }
 }

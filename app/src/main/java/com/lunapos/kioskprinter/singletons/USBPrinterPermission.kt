@@ -17,6 +17,41 @@ object USBPrinterPermission {
         return ArrayList(deviceList)
     }
 
+    fun requestUsbDevicePermission(context: Context, appCompatActivity: AppCompatActivity, usbDevice: UsbDevice?) {
+        val usbManager = context.getSystemService(AppCompatActivity.USB_SERVICE) as UsbManager
+
+        var flag = 0
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flag =
+            PendingIntent.FLAG_MUTABLE
+
+        val mPermissionIntent =
+            PendingIntent.getBroadcast(
+                appCompatActivity, 0, Intent(ACTION_USB_PERMISSION),
+                flag
+            )
+
+        if (!usbManager.hasPermission(usbDevice)) {
+//            usbManager.requestPermission(usbDevice, mPermissionIntent)
+            val usbManager = context.getSystemService(AppCompatActivity.USB_SERVICE) as UsbManager
+
+            var flag = 0
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flag =
+                PendingIntent.FLAG_MUTABLE
+
+            val mPermissionIntent =
+                PendingIntent.getBroadcast(
+                    appCompatActivity, 0, Intent(ACTION_USB_PERMISSION),
+                    flag
+                )
+
+            if (!usbManager.hasPermission(usbDevice)) {
+                usbManager.requestPermission(usbDevice, mPermissionIntent)
+            }
+        }
+    }
+
     fun retrieveUsbDevice(productId: Int, vendorId: Int, context: Context, appCompatActivity: AppCompatActivity) : UsbDevice? {
         val usbManager = context.getSystemService(AppCompatActivity.USB_SERVICE) as UsbManager
         val usbDeviceList = usbManager.deviceList
@@ -32,30 +67,16 @@ object USBPrinterPermission {
             }
 
             if (usbDevice != null) {
-                var flag = 0
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) flag =
-                    PendingIntent.FLAG_MUTABLE
-
-                val mPermissionIntent =
-                    PendingIntent.getBroadcast(
-                        appCompatActivity, 0, Intent(ACTION_USB_PERMISSION),
-                        flag
-                    )
-
-                if (!usbManager.hasPermission(usbDevice)) {
-                    usbManager.requestPermission(usbDevice, mPermissionIntent)
-                }
+                requestUsbDevicePermission(context, appCompatActivity, usbDevice)
             }
         }
 
         return usbDevice
     }
 
-    fun getUsbDevices(context: Context, appCompatActivity: AppCompatActivity) : ArrayList<UsbDevice> {
+    fun getUsbDevices(context: Context) : ArrayList<UsbDevice> {
         val usbManager = context.getSystemService(AppCompatActivity.USB_SERVICE) as UsbManager
         val usbDeviceList = usbManager.deviceList
-        var usbDevice: UsbDevice? = null
 
         if (usbDeviceList != null) {
             val devices = usbDeviceList.values.toList()

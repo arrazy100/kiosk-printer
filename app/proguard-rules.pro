@@ -19,3 +19,20 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# removes such information by default, so configure it to keep all of it.
+-keepattributes Signature,*Annotation*,EnclosingMethod
+
+-keep public class com.lunapos.kioskprinter.dtos.PrinterBody, com.lunapos.kioskprinter.dtos.PrinterBody.**,
+    com.lunapos.kioskprinter.singletons.PrinterData, com.lunapos.kioskprinter.singletons.PrinterData.** {
+    private <fields>;
+    public void set*(***);
+    public *** get*();
+}
+
+#to preserve Jackson annotations like @JsonIgnore
+-keepclassmembers class * {
+    @com.fasterxml.jackson.annotation.* *;
+}
+
+#dont throw warnings from here
+-dontwarn com.fasterxml.jackson.databind.**

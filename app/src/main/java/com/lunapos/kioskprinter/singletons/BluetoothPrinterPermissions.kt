@@ -132,18 +132,19 @@ object BluetoothPrinterPermissions {
     }
 
     fun getBluetoothDevices(context: Context, appCompatActivity: AppCompatActivity) : ArrayList<BluetoothConnection?> {
-        var bluetoothDevices = ArrayList<BluetoothConnection?>()
+        var bluetoothDevices = arrayListOf<BluetoothConnection?>()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-            val bluetoothAdapter = bluetoothManager.adapter
-            if (bluetoothAdapter?.isEnabled == false) {
+            val bluetoothAdapter = bluetoothManager.adapter ?: return bluetoothDevices
+
+            if (!bluetoothAdapter.isEnabled) {
                 return bluetoothDevices
             }
         } else {
-            val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+            val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() ?: return bluetoothDevices
 
-            if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
+            if (!bluetoothAdapter.isEnabled) {
                 return bluetoothDevices
             }
         }

@@ -6,13 +6,11 @@ import android.content.Intent
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
 import android.text.method.TextKeyListener
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.google.android.material.textfield.TextInputLayout
-import com.google.gson.Gson
 import com.lunapos.kioskprinter.databinding.ActivityPrinterInputFormBinding
 import com.lunapos.kioskprinter.enums.AutoCutEnum
 import com.lunapos.kioskprinter.enums.PaperSizeEnum
@@ -95,6 +93,7 @@ class PrinterInputForm : AppCompatActivity() {
             validation = { value ->
                 when {
                     value.isNullOrBlank() -> "Printer harus dipilih"
+                    binding.etPrinterModule.text.toString() == PrinterModuleEnum.Network.toString() && !isHostPortValid(value) -> "Printer tidak valid"
                     else -> null
                 }
             }
@@ -125,6 +124,13 @@ class PrinterInputForm : AppCompatActivity() {
                 }
             }
         )
+    }
+
+    private fun isHostPortValid(value: String): Boolean {
+        // Define a regular expression pattern for host:port
+        val pattern = Regex("""^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([0-9A-Fa-f]*:[0-9A-Fa-f]*:[0-9A-Fa-f]*:[0-9A-Fa-f]*:[0-9A-Fa-f]*:[0-9A-Fa-f]*:[0-9A-Fa-f]*:[0-9A-Fa-f]*)\]):\d{1,5}$""")
+
+        return pattern.matches(value)
     }
 
     private val formFields by lazy {
@@ -165,6 +171,7 @@ class PrinterInputForm : AppCompatActivity() {
 
                 if (printerModuleValue.toString() == PrinterModuleEnum.Bluetooth.toString()) {
                     binding.etPrinter.hint = "Pilih printer bluetooth"
+                    bluetoothDeviceList = BluetoothPrinterPermissions.getBluetoothDevices(applicationContext, this)
                 }
                 else if (printerModuleValue.toString() == PrinterModuleEnum.Network.toString()) {
                     binding.etPrinter.hint = "10.20.30.1:5001"
@@ -197,6 +204,8 @@ class PrinterInputForm : AppCompatActivity() {
 
                     usbProductId = selectedUsb.productId
                     usbVendorId = selectedUsb.vendorId
+
+                    USBPrinterPermission.requestUsbDevicePermission(applicationContext, this, selectedUsb)
                 }
             }
             if (paperSizeValue != null) binding.etPaperSize.setText(paperSizeValue)
@@ -214,12 +223,13 @@ class PrinterInputForm : AppCompatActivity() {
 
         val formEdit = intent.getStringExtra(FORM_EDIT_KEY)
         if (formEdit != null) {
-            val gson = Gson()
-            val obj = gson.fromJson(formEdit.toString(), PrinterData::class.java)
-
-            Log.i("data", formEdit.toString())
+            val obj = SharedPrefsManager.readFromJSON(formEdit.toString())
 
             obj.retrieveDeviceConnection(applicationContext, this)
+
+            if (obj.printerModule == PrinterModuleEnum.Network) {
+                printerChooserIsEnabled(false)
+            }
 
             printerNameField.value = obj.name
             printerTypeField.value = obj.printerType.toString()
@@ -236,6 +246,10 @@ class PrinterInputForm : AppCompatActivity() {
 
             isUpdate = true
             updateId = obj.id
+
+            if (printerModuleField.value == PrinterModuleEnum.Bluetooth.toString()) {
+                bluetoothDeviceList = BluetoothPrinterPermissions.getBluetoothDevices(applicationContext, this)
+            }
         }
 
         binding.toolbarTitle.setOnClickListener {
@@ -357,8 +371,7 @@ class PrinterInputForm : AppCompatActivity() {
 
             if (isUpdate) {
                 SharedPrefsManager.updateListAt(updateId!!, data)
-                val gson = Gson()
-                val converted = gson.toJson(data)
+                val converted = SharedPrefsManager.writeAsJSON(data)
                 val intent = Intent()
                 intent.putExtra(PRINTER_UPDATED_KEY, converted)
                 setResult(Activity.RESULT_OK, intent)
@@ -416,7 +429,7 @@ class PrinterInputForm : AppCompatActivity() {
             result = BluetoothPrinterPermissions.listBluetoothDevice(bluetoothDeviceList)
         }
         else if (module.toString() == PrinterModuleEnum.USB.toString()) {
-            usbDeviceList = USBPrinterPermission.getUsbDevices(applicationContext, this)
+            usbDeviceList = USBPrinterPermission.getUsbDevices(applicationContext)
             result = USBPrinterPermission.listUsbDevice(usbDeviceList)
         }
 

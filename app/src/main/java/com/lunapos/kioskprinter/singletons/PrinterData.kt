@@ -9,6 +9,7 @@ import com.dantsu.escposprinter.connection.DeviceConnection
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.dantsu.escposprinter.connection.tcp.TcpConnection
 import com.dantsu.escposprinter.connection.usb.UsbConnection
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.lunapos.kioskprinter.enums.AutoCutEnum
 import com.lunapos.kioskprinter.enums.PaperSizeEnum
 import com.lunapos.kioskprinter.enums.PrinterModuleEnum
@@ -17,11 +18,11 @@ import com.lunapos.kioskprinter.enums.PrinterTypeEnum
 class PrinterData {
     var id: Int? = null
     var name: String = ""
-    private val printerDpi: Int = 203
+    val printerDpi: Int = 203
     var printerWidthMM: Float = 0f
     var printerNbrCharactersPerLine: Int = 0
     var text: String = ""
-    private val timeout: Int = 1000
+    val timeout: Int = 1000
 
     var printerType: PrinterTypeEnum? = null
     var printerModule: PrinterModuleEnum? = null
@@ -94,16 +95,15 @@ class PrinterData {
         }
     }
 
+    @JsonIgnore
     @SuppressLint("MissingPermission")
     fun getPrinter(): String {
-        return if (printerModule?.equals(PrinterModuleEnum.Network) == true) {
-            networkAddress.toString()
-        } else if (printerModule?.equals(PrinterModuleEnum.Bluetooth) == true) {
-            bluetoothConnection!!.device.name
-        } else if (printerModule?.equals(PrinterModuleEnum.USB) == true) {
-            usbConnection!!.device.deviceName
-        } else {
-            throw Exception("Modul printer tidak valid")
+        return when (printerModule) {
+            PrinterModuleEnum.Network -> networkAddress ?: ""
+            PrinterModuleEnum.Bluetooth -> bluetoothConnection?.device?.name ?: ""
+            PrinterModuleEnum.USB -> usbConnection?.device?.deviceName ?: ""
+            else -> throw Exception("Modul printer tidak valid")
         }
     }
+
 }

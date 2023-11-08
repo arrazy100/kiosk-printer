@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/custom_alert_dialog.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="8dp"
+        android:src="@drawable/warning"
+        android:contentDescription="Icon"/>
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
+        android:text="Apa kamu yakin akan menghapus printer ini?"
+        android:textColor="#000000"
+        android:textSize="24sp"
+        android:layout_marginTop="8dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/positiveButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Iya, yakin"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:backgroundTint="@color/primary"
+        app:cornerRadius="8dp" />
+
+    <Button
+        android:id="@+id/negativeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Batalkan"
+        android:textColor="@color/primary"
+        android:background="@android:color/transparent"/>
+</LinearLayout>
