@@ -16,6 +16,10 @@ import com.lunapos.kioskprinter.enums.PrinterModuleEnum
 import com.lunapos.kioskprinter.enums.PrinterTypeEnum
 
 class PrinterData {
+    /**
+     * Don't set variable that need to be serialized to private
+     **/
+
     var id: Int? = null
     var name: String = ""
     val printerDpi: Int = 203
@@ -82,15 +86,22 @@ class PrinterData {
         }
 
         if (connection != null) {
+            var printer: EscPosPrinter? = null
             try {
-                val printer = EscPosPrinter(
+                printer = EscPosPrinter(
                     connection, this.printerDpi,
                     this.printerWidthMM, this.printerNbrCharactersPerLine
                 )
 
-                printer.printFormattedTextAndCut(this.text.trimIndent())
+                if (printCopy != null) {
+                    for (num in 1..printCopy!!)
+                        printer.printFormattedTextAndCut(this.text.trimIndent())
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+            finally {
+                if (disconnectAfterPrint == true) printer?.disconnectPrinter()
             }
         }
     }

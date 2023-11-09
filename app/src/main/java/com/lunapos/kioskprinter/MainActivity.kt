@@ -28,6 +28,7 @@ import com.lunapos.kioskprinter.adapters.PrinterListAdapter
 import com.lunapos.kioskprinter.singletons.ACTION_USB_PERMISSION
 import com.lunapos.kioskprinter.singletons.BluetoothPrinterPermissions
 import com.lunapos.kioskprinter.singletons.CoroutinePrinter
+import com.lunapos.kioskprinter.singletons.FORM_ADD_KEY
 import com.lunapos.kioskprinter.singletons.PRINTER_ADDED_KEY
 import com.lunapos.kioskprinter.singletons.PRINTER_NOTIFICATION_ID
 import com.lunapos.kioskprinter.singletons.PRINTER_UPDATED_KEY
@@ -54,7 +55,14 @@ class MainActivity : AppCompatActivity() {
 
             if (newPrinter != null) {
                 val newPrinterObj = SharedPrefsManager.readFromJSON(newPrinter)
+
                 coroutinePrinter.printers.add(newPrinterObj)
+
+                newPrinterObj.id = coroutinePrinter.printers.size - 1
+
+                SharedPrefsManager.writeToList(newPrinterObj)
+
+                coroutinePrinter.printers.sortBy { it.id }
 
                 printerListAdapter!!.notifyDataSetChanged()
 
@@ -65,11 +73,19 @@ class MainActivity : AppCompatActivity() {
 
             if (updatedPrinter != null) {
                 val newPrinterObj = SharedPrefsManager.readFromJSON(updatedPrinter)
-                coroutinePrinter.printers[newPrinterObj.id!!] = newPrinterObj
 
-                printerListAdapter!!.notifyDataSetChanged()
+                val index = coroutinePrinter.printers.indexOfFirst { it.id == newPrinterObj.id!! }
+                if (index != -1) {
+                    coroutinePrinter.printers[index] = newPrinterObj
 
-                newPrinterObj.retrieveDeviceConnection(applicationContext, this)
+                    SharedPrefsManager.updateListAt(index, newPrinterObj)
+
+                    coroutinePrinter.printers.sortBy { it.id }
+
+                    printerListAdapter!!.notifyItemChanged(index)
+
+                    newPrinterObj.retrieveDeviceConnection(applicationContext, this)
+                }
             }
         }
     }
@@ -123,6 +139,7 @@ class MainActivity : AppCompatActivity() {
 
         // load data
         coroutinePrinter.printers = SharedPrefsManager.readAsPrinterData(applicationContext, this)
+        coroutinePrinter.printers.sortBy { it.id }
         coroutinePrinter.printers.forEach { item ->
             item.retrieveDeviceConnection(applicationContext, this)
         }
@@ -151,12 +168,14 @@ class MainActivity : AppCompatActivity() {
 
         btnAddPrinter.setOnClickListener {
             val intent = Intent(this, PrinterInputForm::class.java)
+            intent.putExtra(FORM_ADD_KEY, coroutinePrinter.printers.size)
             resultLauncher.launch(intent)
         }
 
         val btnAddPrinterEmpty = findViewById<Button>(R.id.btn_add_printer_empty)
         btnAddPrinterEmpty.setOnClickListener {
             val intent = Intent(this, PrinterInputForm::class.java)
+            intent.putExtra(FORM_ADD_KEY, coroutinePrinter.printers.size)
             resultLauncher.launch(intent)
         }
     }

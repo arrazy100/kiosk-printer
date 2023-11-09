@@ -1,7 +1,6 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

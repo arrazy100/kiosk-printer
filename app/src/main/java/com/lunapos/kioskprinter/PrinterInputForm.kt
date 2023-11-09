@@ -151,8 +151,8 @@ class PrinterInputForm : AppCompatActivity() {
     private var usbProductId: Int? = null
     private var usbVendorId: Int? = null
 
+    private var id: Int? = null
     private var isUpdate = false
-    private var updateId: Int? = null
 
     @SuppressLint("MissingPermission")
     private val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -244,8 +244,8 @@ class PrinterInputForm : AppCompatActivity() {
             usbProductId = obj.usbProductId
             usbVendorId = obj.usbVendorId
 
+            id = obj.id!!
             isUpdate = true
-            updateId = obj.id
 
             if (printerModuleField.value == PrinterModuleEnum.Bluetooth.toString()) {
                 bluetoothDeviceList = BluetoothPrinterPermissions.getBluetoothDevices(applicationContext, this)
@@ -337,6 +337,7 @@ class PrinterInputForm : AppCompatActivity() {
         if (formFields.validate()) {
             val data = PrinterData()
 
+            data.id = id
             data.name = printerNameField.value.toString()
             data.printerName = printerModuleField.value.toString() + " - " + printerField.value.toString()
             data.printerType = PrinterTypeEnum.valueOf(printerTypeField.value.toString())
@@ -370,7 +371,6 @@ class PrinterInputForm : AppCompatActivity() {
             data.printCopy = currentCopyValue
 
             if (isUpdate) {
-                SharedPrefsManager.updateListAt(updateId!!, data)
                 val converted = SharedPrefsManager.writeAsJSON(data)
                 val intent = Intent()
                 intent.putExtra(PRINTER_UPDATED_KEY, converted)
@@ -378,9 +378,9 @@ class PrinterInputForm : AppCompatActivity() {
                 finish()
             }
             else {
-                val serialized = SharedPrefsManager.writeToList(data)
+                val converted = SharedPrefsManager.writeAsJSON(data)
                 val intent = Intent()
-                intent.putExtra(PRINTER_ADDED_KEY, serialized)
+                intent.putExtra(PRINTER_ADDED_KEY, converted)
                 setResult(Activity.RESULT_OK, intent)
                 finish()
             }

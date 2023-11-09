@@ -58,8 +58,7 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
 
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
-        dataSet[position].id = position
-
+        if (dataSet[position].id == null) dataSet[position].id = position
         viewHolder.title.text = dataSet[position].name
 
         viewHolder.selectedPrinter.setText(dataSet[position].printerName)
@@ -77,14 +76,14 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         }
 
         viewHolder.deleteButton.setOnClickListener {
-            showAlertDialog(position)
+            showAlertDialog(dataSet[position])
         }
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount() = dataSet.size
 
-    private fun doPrint(printer : PrinterData, button : Button) {
+    private fun doPrint(printer : PrinterData?, button : Button) {
         printing = true
         button.isEnabled = false
 
@@ -93,7 +92,7 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 launch {
-                    printer.text = "Tes"
+                    printer!!.text = "Tes"
                     printer.print(context)
                 }
 
@@ -117,7 +116,7 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         }
     }
 
-    private fun showAlertDialog(position: Int) {
+    private fun showAlertDialog(itemToRemove: PrinterData) {
         // Create and show the AlertDialog here, similar to the previous example
         val inflater = LayoutInflater.from(context)
         val view = inflater.inflate(R.layout.alert_dialog, null)
@@ -130,9 +129,10 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
 
         positiveButton.setOnClickListener {
             alertDialog.dismiss()
-            SharedPrefsManager.removeListAt(position)
 
-            dataSet.removeAt(position)
+            dataSet.remove(itemToRemove)
+            SharedPrefsManager.removeData(itemToRemove)
+
             notifyDataSetChanged()
         }
 

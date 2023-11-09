@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 
 
 object SharedPrefsManager {
@@ -84,6 +85,16 @@ object SharedPrefsManager {
         editor.apply()
     }
 
+    fun removeData(data: PrinterData) {
+        val originalSet = prefs.getStringSet(PRINTER_LIST_KEY, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+        originalSet.remove(writeAsJSON(data))
+
+        val editor = prefs.edit()
+        editor.putStringSet(PRINTER_LIST_KEY, originalSet)
+        editor.apply()
+    }
+
     fun updateListAt(position: Int, data: PrinterData) {
         data.id = position
 
@@ -95,8 +106,12 @@ object SharedPrefsManager {
         val converted = writeAsJSON(data)
         originalSet.add(converted)
 
+        val items = originalSet.map { objectMapper.readValue<PrinterData>(it) }.toMutableList()
+        items.sortBy { it.id }
+        val sortedItemSet = items.map { objectMapper.writeValueAsString(it) }.toSet()
+
         val editor = prefs.edit()
-        editor.putStringSet(PRINTER_LIST_KEY, originalSet)
+        editor.putStringSet(PRINTER_LIST_KEY, sortedItemSet)
         editor.apply()
     }
 
