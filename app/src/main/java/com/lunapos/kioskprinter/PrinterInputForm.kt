@@ -365,6 +365,14 @@ class PrinterInputForm : AppCompatActivity() {
                 data.printerNbrCharactersPerLine = 32
                 data.printerWidthMM = 60f
             }
+            else if (data.paperSize == PaperSizeEnum.SeventySix) {
+                data.printerNbrCharactersPerLine = 48
+                data.printerWidthMM = 76f
+            }
+            else if (data.paperSize == PaperSizeEnum.Eighty) {
+                data.printerNbrCharactersPerLine = 48
+                data.printerWidthMM = 80f
+            }
 
             data.autoCut = autoCutField.value?.let { AutoCutEnum.fromInt(it.toInt()) }
             data.disconnectAfterPrint = binding.checkboxDisconnect.isChecked
