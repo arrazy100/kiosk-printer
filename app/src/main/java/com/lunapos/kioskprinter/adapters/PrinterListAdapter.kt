@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textfield.TextInputLayout
 import com.lunapos.kioskprinter.PrinterInputForm
 import com.lunapos.kioskprinter.R
 import com.lunapos.kioskprinter.singletons.FORM_EDIT_KEY
@@ -31,6 +32,7 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView
+        val tilSelectedPrinter: TextInputLayout
         val selectedPrinter: AutoCompleteTextView
         val testPrintButton: Button
         val deleteButton: Button
@@ -38,6 +40,7 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         init {
             // Define click listener for the ViewHolder's View
             title = view.findViewById(R.id.title)
+            tilSelectedPrinter = view.findViewById(R.id.til_selected_printer)
             selectedPrinter = view.findViewById(R.id.et_printer_name)
             testPrintButton = view.findViewById(R.id.btn_test_print)
             deleteButton = view.findViewById(R.id.btn_delete)
@@ -62,6 +65,14 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         viewHolder.title.text = dataSet[position].name
 
         viewHolder.selectedPrinter.setText(dataSet[position].printerName)
+
+        viewHolder.tilSelectedPrinter.setEndIconOnClickListener {
+            val converted = SharedPrefsManager.writeAsJSON(dataSet[position])
+
+            val intent = Intent(context, PrinterInputForm::class.java)
+            intent.putExtra(FORM_EDIT_KEY, converted)
+            resultLauncher.launch(intent)
+        }
 
         viewHolder.selectedPrinter.setOnClickListener {
             val converted = SharedPrefsManager.writeAsJSON(dataSet[position])

@@ -256,44 +256,39 @@ class PrinterInputForm : AppCompatActivity() {
             finish()
         }
 
+        binding.tilPrinterType.setEndIconOnClickListener {
+            printerTypeClickListener()
+        }
         binding.etPrinterType.setOnClickListener {
-            val dataList = ArrayList(enumValues<PrinterTypeEnum>().map { it.name })
-            val intent = Intent(this, DropdownMenu::class.java)
-            intent.putExtra("title", PRINTER_TYPE_TITLE)
-            intent.putExtra("key", PRINTER_TYPE_KEY)
-            intent.putStringArrayListExtra("data", dataList)
-            resultLauncher.launch(intent)
+            printerTypeClickListener()
         }
 
+        binding.tilPrinterModule.setEndIconOnClickListener {
+            printerModuleClickListener()
+        }
         binding.etPrinterModule.setOnClickListener {
-            val dataList = ArrayList(enumValues<PrinterModuleEnum>().map { it.name })
-            val intent = Intent(this, DropdownMenu::class.java)
-            intent.putExtra("title", PRINTER_MODULE_TITLE)
-            intent.putExtra("key", PRINTER_MODULE_KEY)
-            intent.putStringArrayListExtra("data", dataList)
-            resultLauncher.launch(intent)
+            printerModuleClickListener()
         }
 
+        binding.tilPrinter.setEndIconOnClickListener {
+            printerClickListener()
+        }
         binding.etPrinter.setOnClickListener {
             printerClickListener()
         }
 
+        binding.tilPaperSize.setEndIconOnClickListener {
+            paperSizeClickListener()
+        }
         binding.etPaperSize.setOnClickListener {
-            val dataList = ArrayList(enumValues<PaperSizeEnum>().map { it.value.toString() })
-            val intent = Intent(this, DropdownMenu::class.java)
-            intent.putExtra("title", PAPER_SIZE_TITLE)
-            intent.putExtra("key", PAPER_SIZE_KEY)
-            intent.putStringArrayListExtra("data", dataList)
-            resultLauncher.launch(intent)
+            paperSizeClickListener()
         }
 
+        binding.tilAutoCut.setEndIconOnClickListener {
+            autoCutClickListener()
+        }
         binding.etAutoCut.setOnClickListener {
-            val dataList = ArrayList(enumValues<AutoCutEnum>().map { it.value.toString() })
-            val intent = Intent(this, DropdownMenu::class.java)
-            intent.putExtra("title", AUTO_CUT_TITLE)
-            intent.putExtra("key", AUTO_CUT_KEY)
-            intent.putStringArrayListExtra("data", dataList)
-            resultLauncher.launch(intent)
+            autoCutClickListener()
         }
 
         binding.copyDecrement.setOnClickListener {
@@ -328,6 +323,42 @@ class PrinterInputForm : AppCompatActivity() {
             requestCode,
             grantResults
         )
+    }
+
+    private fun printerTypeClickListener() {
+        val dataList = ArrayList(enumValues<PrinterTypeEnum>().map { it.name })
+        val intent = Intent(this, DropdownMenu::class.java)
+        intent.putExtra("title", PRINTER_TYPE_TITLE)
+        intent.putExtra("key", PRINTER_TYPE_KEY)
+        intent.putStringArrayListExtra("data", dataList)
+        resultLauncher.launch(intent)
+    }
+
+    private fun printerModuleClickListener() {
+        val dataList = ArrayList(enumValues<PrinterModuleEnum>().map { it.name })
+        val intent = Intent(this, DropdownMenu::class.java)
+        intent.putExtra("title", PRINTER_MODULE_TITLE)
+        intent.putExtra("key", PRINTER_MODULE_KEY)
+        intent.putStringArrayListExtra("data", dataList)
+        resultLauncher.launch(intent)
+    }
+
+    private fun paperSizeClickListener() {
+        val dataList = ArrayList(enumValues<PaperSizeEnum>().map { it.value.toString() })
+        val intent = Intent(this, DropdownMenu::class.java)
+        intent.putExtra("title", PAPER_SIZE_TITLE)
+        intent.putExtra("key", PAPER_SIZE_KEY)
+        intent.putStringArrayListExtra("data", dataList)
+        resultLauncher.launch(intent)
+    }
+
+    private fun autoCutClickListener() {
+        val dataList = ArrayList(enumValues<AutoCutEnum>().map { it.value.toString() })
+        val intent = Intent(this, DropdownMenu::class.java)
+        intent.putExtra("title", AUTO_CUT_TITLE)
+        intent.putExtra("key", AUTO_CUT_KEY)
+        intent.putStringArrayListExtra("data", dataList)
+        resultLauncher.launch(intent)
     }
 
     private fun submit() = lifecycleScope.launch {
