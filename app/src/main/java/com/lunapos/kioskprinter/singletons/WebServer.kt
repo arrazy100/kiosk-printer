@@ -80,6 +80,7 @@ class WebServer private constructor() {
         responseHeaders.add("Access-Control-Allow-Origin", "*")
         responseHeaders.add("Access-Control-Allow-Methods", "GET, POST")
         responseHeaders.add("Access-Control-Allow-Headers", "Content-Type")
+        responseHeaders.add("Content-Type", "application/json")
     }
 
     private fun handleOptionsRequest(exchange: HttpExchange) {
@@ -117,7 +118,7 @@ class WebServer private constructor() {
                 return@HttpHandler
             }
             "GET" -> {
-                exchange.responseHeaders.set("Content-Type", "application/json")
+                handleCorsHeaders(exchange)
 
                 var characterNbrPerLines = mutableListOf<Int>()
                 coroutinePrinter!!.printers!!.forEach {
