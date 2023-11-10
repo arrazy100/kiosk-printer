@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.hardware.usb.UsbDevice
+import android.os.Build
 import android.os.Bundle
 import android.text.method.TextKeyListener
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,28 +12,27 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.dantsu.escposprinter.connection.bluetooth.BluetoothConnection
 import com.google.android.material.textfield.TextInputLayout
+import com.lunapos.kioskprinter.Constants.AUTO_CUT_KEY
+import com.lunapos.kioskprinter.Constants.AUTO_CUT_TITLE
+import com.lunapos.kioskprinter.Constants.FORM_EDIT_KEY
+import com.lunapos.kioskprinter.Constants.PAPER_SIZE_KEY
+import com.lunapos.kioskprinter.Constants.PAPER_SIZE_TITLE
+import com.lunapos.kioskprinter.Constants.PRINTER_ADDED_KEY
+import com.lunapos.kioskprinter.Constants.PRINTER_KEY
+import com.lunapos.kioskprinter.Constants.PRINTER_MODULE_KEY
+import com.lunapos.kioskprinter.Constants.PRINTER_MODULE_TITLE
+import com.lunapos.kioskprinter.Constants.PRINTER_TITLE
+import com.lunapos.kioskprinter.Constants.PRINTER_TYPE_KEY
+import com.lunapos.kioskprinter.Constants.PRINTER_TYPE_TITLE
+import com.lunapos.kioskprinter.Constants.PRINTER_UPDATED_KEY
+import com.lunapos.kioskprinter.PrinterUtil.BluetoothPrinterPermissions
+import com.lunapos.kioskprinter.PrinterUtil.USBPrinterPermission
 import com.lunapos.kioskprinter.databinding.ActivityPrinterInputFormBinding
+import com.lunapos.kioskprinter.dtos.PrinterData
 import com.lunapos.kioskprinter.enums.AutoCutEnum
 import com.lunapos.kioskprinter.enums.PaperSizeEnum
 import com.lunapos.kioskprinter.enums.PrinterModuleEnum
 import com.lunapos.kioskprinter.enums.PrinterTypeEnum
-import com.lunapos.kioskprinter.singletons.AUTO_CUT_KEY
-import com.lunapos.kioskprinter.singletons.AUTO_CUT_TITLE
-import com.lunapos.kioskprinter.singletons.BluetoothPrinterPermissions
-import com.lunapos.kioskprinter.singletons.FORM_EDIT_KEY
-import com.lunapos.kioskprinter.singletons.PAPER_SIZE_KEY
-import com.lunapos.kioskprinter.singletons.PAPER_SIZE_TITLE
-import com.lunapos.kioskprinter.singletons.PRINTER_ADDED_KEY
-import com.lunapos.kioskprinter.singletons.PRINTER_KEY
-import com.lunapos.kioskprinter.singletons.PRINTER_MODULE_KEY
-import com.lunapos.kioskprinter.singletons.PRINTER_MODULE_TITLE
-import com.lunapos.kioskprinter.singletons.PRINTER_TITLE
-import com.lunapos.kioskprinter.singletons.PRINTER_TYPE_KEY
-import com.lunapos.kioskprinter.singletons.PRINTER_TYPE_TITLE
-import com.lunapos.kioskprinter.singletons.PRINTER_UPDATED_KEY
-import com.lunapos.kioskprinter.singletons.PrinterData
-import com.lunapos.kioskprinter.singletons.SharedPrefsManager
-import com.lunapos.kioskprinter.singletons.USBPrinterPermission
 import com.lunapos.kioskprinter.ui.FormFieldAutoComplete
 import com.lunapos.kioskprinter.ui.FormFieldText
 import com.lunapos.kioskprinter.ui.disable
@@ -151,7 +151,7 @@ class PrinterInputForm : AppCompatActivity() {
     private var usbProductId: Int? = null
     private var usbVendorId: Int? = null
 
-    private var id: Int? = null
+    private var updateId: Int = 0
     private var isUpdate = false
 
     @SuppressLint("MissingPermission")
@@ -217,14 +217,16 @@ class PrinterInputForm : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        SharedPrefsManager.init(applicationContext)
-
         formFields
 
-        val formEdit = intent.getStringExtra(FORM_EDIT_KEY)
-        if (formEdit != null) {
-            val obj = SharedPrefsManager.readFromJSON(formEdit.toString())
+        val obj = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getSerializableExtra(FORM_EDIT_KEY, PrinterData::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getSerializableExtra(FORM_EDIT_KEY) as? PrinterData
+        }
 
+        if (obj != null) {
             obj.retrieveDeviceConnection(applicationContext, this)
 
             if (obj.printerModule == PrinterModuleEnum.Network) {
@@ -244,7 +246,7 @@ class PrinterInputForm : AppCompatActivity() {
             usbProductId = obj.usbProductId
             usbVendorId = obj.usbVendorId
 
-            id = obj.id!!
+            updateId = obj.id ?: -1
             isUpdate = true
 
             if (printerModuleField.value == PrinterModuleEnum.Bluetooth.toString()) {
@@ -368,7 +370,6 @@ class PrinterInputForm : AppCompatActivity() {
         if (formFields.validate()) {
             val data = PrinterData()
 
-            data.id = id
             data.name = printerNameField.value.toString()
             data.printerName = printerModuleField.value.toString() + " - " + printerField.value.toString()
             data.printerType = PrinterTypeEnum.valueOf(printerTypeField.value.toString())
@@ -409,17 +410,16 @@ class PrinterInputForm : AppCompatActivity() {
             data.disconnectAfterPrint = binding.checkboxDisconnect.isChecked
             data.printCopy = currentCopyValue
 
-            if (isUpdate) {
-                val converted = SharedPrefsManager.writeAsJSON(data)
+            if (isUpdate && updateId != -1) {
+                data.id = updateId
                 val intent = Intent()
-                intent.putExtra(PRINTER_UPDATED_KEY, converted)
+                intent.putExtra(PRINTER_UPDATED_KEY, data)
                 setResult(Activity.RESULT_OK, intent)
                 finish()
             }
             else {
-                val converted = SharedPrefsManager.writeAsJSON(data)
                 val intent = Intent()
-                intent.putExtra(PRINTER_ADDED_KEY, converted)
+                intent.putExtra(PRINTER_ADDED_KEY, data)
                 setResult(Activity.RESULT_OK, intent)
                 finish()
             }

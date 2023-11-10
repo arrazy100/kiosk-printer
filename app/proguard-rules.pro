@@ -23,7 +23,7 @@
 -keepattributes Signature,*Annotation*,EnclosingMethod
 
 -keep public class com.lunapos.kioskprinter.dtos.PrinterBody, com.lunapos.kioskprinter.dtos.PrinterBody.**,
-    com.lunapos.kioskprinter.singletons.PrinterData, com.lunapos.kioskprinter.singletons.PrinterData.** {
+    com.lunapos.kioskprinter.dtos.PrinterData, com.lunapos.kioskprinter.dtos.PrinterData.** {
     private <fields>;
     public void set*(***);
     public *** get*();

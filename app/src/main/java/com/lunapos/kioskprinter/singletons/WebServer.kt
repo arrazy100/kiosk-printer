@@ -1,9 +1,13 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.core.app.NotificationManagerCompat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.lunapos.kioskprinter.Constants.SERVER_CHANNEL_ID
+import com.lunapos.kioskprinter.Constants.SERVER_CHANNEL_NAME
+import com.lunapos.kioskprinter.Constants.SERVER_NOTIFICATION_ID
 import com.lunapos.kioskprinter.dtos.PrinterBody
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
@@ -114,7 +118,20 @@ class WebServer private constructor() {
                 return@HttpHandler
             }
             "GET" -> {
-                sendResponse(exchange, "Welcome to my server")
+                exchange.responseHeaders.set("Content-Type", "application/json")
+
+                var paperSizeList = mutableListOf<Int>()
+                coroutinePrinter!!.printers!!.forEach {
+                    paperSizeList.add(it.paperSize!!.value)
+                }
+
+                val responseMap = mapOf(
+                    "data" to paperSizeList
+                )
+
+                val response = jacksonObjectMapper().writeValueAsString(responseMap)
+
+                sendResponse(exchange, response)
                 return@HttpHandler
             }
             "POST" -> {
@@ -130,7 +147,7 @@ class WebServer private constructor() {
                     body = parseBody(exchange)
 
                     if (context != null) {
-                        for (print in coroutinePrinter!!.printers) {
+                        for (print in coroutinePrinter!!.printers!!) {
                             print.text = body.message
                         }
                         coroutinePrinter?.doPrintOnServer(

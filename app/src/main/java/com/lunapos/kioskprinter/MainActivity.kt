@@ -20,21 +20,23 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
+import com.lunapos.kioskprinter.Constants.ACTION_USB_PERMISSION
+import com.lunapos.kioskprinter.Constants.FORM_ADD_KEY
+import com.lunapos.kioskprinter.Constants.PRINTER_ADDED_KEY
+import com.lunapos.kioskprinter.Constants.PRINTER_NOTIFICATION_ID
+import com.lunapos.kioskprinter.Constants.PRINTER_UPDATED_KEY
+import com.lunapos.kioskprinter.Constants.SERVER_NOTIFICATION_ID
+import com.lunapos.kioskprinter.PrinterUtil.BluetoothPrinterPermissions
 import com.lunapos.kioskprinter.adapters.PrinterEmptyListAdapter
 import com.lunapos.kioskprinter.adapters.PrinterListAdapter
-import com.lunapos.kioskprinter.singletons.ACTION_USB_PERMISSION
-import com.lunapos.kioskprinter.singletons.BluetoothPrinterPermissions
+import com.lunapos.kioskprinter.dtos.PrinterData
 import com.lunapos.kioskprinter.singletons.CoroutinePrinter
-import com.lunapos.kioskprinter.singletons.FORM_ADD_KEY
-import com.lunapos.kioskprinter.singletons.PRINTER_ADDED_KEY
-import com.lunapos.kioskprinter.singletons.PRINTER_NOTIFICATION_ID
-import com.lunapos.kioskprinter.singletons.PRINTER_UPDATED_KEY
-import com.lunapos.kioskprinter.singletons.SERVER_NOTIFICATION_ID
-import com.lunapos.kioskprinter.singletons.SharedPrefsManager
 import com.lunapos.kioskprinter.singletons.WebServer
+import com.lunapos.kioskprinter.viewModel.PrinterEntityViewModel
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,44 +49,46 @@ class MainActivity : AppCompatActivity() {
 
     private var printerListAdapter: PrinterListAdapter? = null
     private var printerEmptyListAdapter: PrinterEmptyListAdapter? = null
+    private lateinit var printerViewModel: PrinterEntityViewModel
 
     @SuppressLint("MissingPermission")
     private val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val newPrinter = result.data!!.getStringExtra(PRINTER_ADDED_KEY)
-
-            if (newPrinter != null) {
-                val newPrinterObj = SharedPrefsManager.readFromJSON(newPrinter)
-
-                coroutinePrinter.printers.add(newPrinterObj)
-
-                newPrinterObj.id = coroutinePrinter.printers.size - 1
-
-                SharedPrefsManager.writeToList(newPrinterObj)
-
-                coroutinePrinter.printers.sortBy { it.id }
-
-                printerListAdapter!!.notifyDataSetChanged()
-
-                newPrinterObj.retrieveDeviceConnection(applicationContext, this)
+            val newPrinter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result.data!!.getSerializableExtra(PRINTER_ADDED_KEY, PrinterData::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                result.data!!.getSerializableExtra(PRINTER_ADDED_KEY) as? PrinterData
             }
 
-            val updatedPrinter = result.data!!.getStringExtra(PRINTER_UPDATED_KEY)
+            if (newPrinter != null) {
+                newPrinter.retrieveDeviceConnection(applicationContext, this)
+
+                val printerEntity = printerViewModel.convertToPrinterEntity(newPrinter)
+                val insertedId = printerViewModel.savePrinter(printerEntity)
+
+                newPrinter.id = insertedId
+                printerListAdapter!!.dataSet.add(newPrinter)
+            }
+
+            val updatedPrinter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                result.data!!.getSerializableExtra(PRINTER_UPDATED_KEY, PrinterData::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                result.data!!.getSerializableExtra(PRINTER_UPDATED_KEY) as? PrinterData
+            }
 
             if (updatedPrinter != null) {
-                val newPrinterObj = SharedPrefsManager.readFromJSON(updatedPrinter)
+                updatedPrinter.retrieveDeviceConnection(applicationContext, this)
 
-                val index = coroutinePrinter.printers.indexOfFirst { it.id == newPrinterObj.id!! }
+                val index = printerListAdapter!!.dataSet.indexOfFirst { it.id == updatedPrinter.id }
+
                 if (index != -1) {
-                    coroutinePrinter.printers[index] = newPrinterObj
+                    val printerEntity = printerViewModel.convertToPrinterEntity(updatedPrinter)
+                    printerEntity.id = updatedPrinter.id!!
+                    printerViewModel.updatePrinter(printerEntity)
 
-                    SharedPrefsManager.updateListAt(index, newPrinterObj)
-
-                    coroutinePrinter.printers.sortBy { it.id }
-
-                    printerListAdapter!!.notifyItemChanged(index)
-
-                    newPrinterObj.retrieveDeviceConnection(applicationContext, this)
+                    printerListAdapter!!.dataSet[index] = updatedPrinter
                 }
             }
         }
@@ -119,8 +123,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        SharedPrefsManager.init(applicationContext)
-
         val serverSwitch: SwitchCompat = findViewById(R.id.server_switch)
 
         notificationManager = NotificationManagerCompat.from(applicationContext)
@@ -137,21 +139,23 @@ class MainActivity : AppCompatActivity() {
         val emptyPrinterListView: View = findViewById(R.id.empty_printer_list_view)
         val btnAddPrinter = findViewById<Button>(R.id.btn_add_printer)
 
-        // load data
-        coroutinePrinter.printers = SharedPrefsManager.readAsPrinterData(applicationContext, this)
-        coroutinePrinter.printers.sortBy { it.id }
-        coroutinePrinter.printers.forEach { item ->
-            item.retrieveDeviceConnection(applicationContext, this)
-        }
-
-        printerListAdapter = PrinterListAdapter(this, resultLauncher, coroutinePrinter.printers)
+        printerListAdapter = PrinterListAdapter(this, resultLauncher, mutableListOf())
         printerEmptyListAdapter = PrinterEmptyListAdapter(printerListView, emptyPrinterListView, btnAddPrinter)
 
         printerListView.adapter = printerListAdapter
         printerListView.layoutManager = LinearLayoutManager(this)
         printerListAdapter!!.registerAdapterDataObserver(printerEmptyListAdapter!!)
 
-        printerListAdapter!!.notifyDataSetChanged()
+        printerViewModel = ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(application))[PrinterEntityViewModel::class.java]
+        printerViewModel.allPrinters.observe(this) { printers ->
+            printerListAdapter!!.setData(printerViewModel.convertToPrinterData(printers))
+            printerListAdapter!!.dataSet.forEach { item ->
+                item.retrieveDeviceConnection(applicationContext, this)
+            }
+            printerListAdapter!!.setViewModel(printerViewModel)
+            printerListAdapter!!.notifyDataSetChanged()
+            coroutinePrinter.printers = printerListAdapter!!.dataSet
+        }
 
         // Register Server switch listener
         serverSwitch.setOnCheckedChangeListener { _: CompoundButton, isChecked: Boolean ->
@@ -168,14 +172,14 @@ class MainActivity : AppCompatActivity() {
 
         btnAddPrinter.setOnClickListener {
             val intent = Intent(this, PrinterInputForm::class.java)
-            intent.putExtra(FORM_ADD_KEY, coroutinePrinter.printers.size)
+            intent.putExtra(FORM_ADD_KEY, printerListAdapter!!.dataSet.size)
             resultLauncher.launch(intent)
         }
 
         val btnAddPrinterEmpty = findViewById<Button>(R.id.btn_add_printer_empty)
         btnAddPrinterEmpty.setOnClickListener {
             val intent = Intent(this, PrinterInputForm::class.java)
-            intent.putExtra(FORM_ADD_KEY, coroutinePrinter.printers.size)
+            intent.putExtra(FORM_ADD_KEY, printerListAdapter!!.dataSet.size)
             resultLauncher.launch(intent)
         }
     }
@@ -201,7 +205,12 @@ class MainActivity : AppCompatActivity() {
     private val usbReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
-            val device = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+            val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+            }
             if (ACTION_USB_PERMISSION == action) {
                 synchronized(this) {
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
@@ -231,7 +240,7 @@ class MainActivity : AppCompatActivity() {
                     appCompatActivity = context
                 }
 
-                coroutinePrinter.printers.forEach { printer ->
+                printerListAdapter!!.dataSet.forEach { printer ->
                     if (appCompatActivity == null || device == null) return
 
                     if ((printer.usbProductId != null) && (printer.usbProductId == device.productId)) {

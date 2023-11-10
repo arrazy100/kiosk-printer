@@ -33,7 +33,13 @@ class PrinterEmptyListAdapter constructor(rv: RecyclerView?, ev: View?, button: 
         checkIfEmpty()
     }
 
+    override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+        super.onItemRangeInserted(positionStart, itemCount)
+        checkIfEmpty()
+    }
+
     override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
         super.onItemRangeChanged(positionStart, itemCount)
+        checkIfEmpty()
     }
 }

@@ -2,7 +2,12 @@ package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
 import android.widget.Button
+import androidx.annotation.Keep
 import androidx.core.app.NotificationManagerCompat
+import com.lunapos.kioskprinter.Constants.PRINTER_CHANNEL_ID
+import com.lunapos.kioskprinter.Constants.PRINTER_CHANNEL_NAME
+import com.lunapos.kioskprinter.Constants.PRINTER_NOTIFICATION_ID
+import com.lunapos.kioskprinter.dtos.PrinterData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,12 +26,12 @@ class CoroutinePrinter {
             }
     }
 
-    var printers = mutableListOf<PrinterData>()
+    var printers: MutableList<PrinterData>? = null
     var printing = false
 
-    fun addPrinter(printer: PrinterData) {
-        printers.add(printer)
-    }
+//    fun addPrinter(printer: PrinterData) {
+//        printers!!.add(printer)
+//    }
 
     private fun calculateProgress(arraySize: Int): MutableList<Int> {
         val progressArray = mutableListOf<Int>()
@@ -49,7 +54,7 @@ class CoroutinePrinter {
             return
         }
 
-        if (printers.isEmpty()) {
+        if (printers!!.isEmpty()) {
             return
         }
 
@@ -62,13 +67,13 @@ class CoroutinePrinter {
         notifications.showProgressNotification(context, notificationManager, PRINTER_CHANNEL_ID,
             PRINTER_CHANNEL_NAME, PRINTER_NOTIFICATION_ID, "Printer", "Print Progress")
 
-        val progressArray = calculateProgress(printers.size)
+        val progressArray = calculateProgress(printers!!.size)
 
         CoroutineScope(Dispatchers.IO).launch {
             val jobs = mutableListOf<Job>()
 
             try {
-                for ((index, printer) in printers.withIndex()) {
+                for ((index, printer) in printers!!.withIndex()) {
                     val job = launch {
                         val progress = progressArray[index]
 
@@ -122,7 +127,7 @@ class CoroutinePrinter {
             return
         }
 
-        if (printers.isEmpty()) {
+        if (printers!!.isEmpty()) {
             return
         }
 
@@ -132,13 +137,13 @@ class CoroutinePrinter {
         notifications.showProgressNotification(context, notificationManager, PRINTER_CHANNEL_ID,
             PRINTER_CHANNEL_NAME, PRINTER_NOTIFICATION_ID, "Printer", "Print Progress")
 
-        val progressArray = calculateProgress(printers.size)
+        val progressArray = calculateProgress(printers!!.size)
 
         CoroutineScope(Dispatchers.IO).launch {
             val jobs = mutableListOf<Job>()
 
             try {
-                for ((index, printer) in printers.withIndex()) {
+                for ((index, printer) in printers!!.withIndex()) {
                     val job = launch {
                         val progress = progressArray[index]
 

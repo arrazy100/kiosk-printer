@@ -2,7 +2,6 @@ package com.lunapos.kioskprinter.adapters
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,22 +12,23 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputLayout
+import com.lunapos.kioskprinter.Constants.FORM_EDIT_KEY
 import com.lunapos.kioskprinter.PrinterInputForm
 import com.lunapos.kioskprinter.R
-import com.lunapos.kioskprinter.singletons.FORM_EDIT_KEY
-import com.lunapos.kioskprinter.singletons.PrinterData
-import com.lunapos.kioskprinter.singletons.SharedPrefsManager
+import com.lunapos.kioskprinter.dtos.PrinterData
+import com.lunapos.kioskprinter.viewModel.PrinterEntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PrinterListAdapter(private val context: Context, private val resultLauncher: ActivityResultLauncher<Intent>, private val dataSet: MutableList<PrinterData>) : RecyclerView.Adapter<PrinterListAdapter.ViewHolder>() {
+class PrinterListAdapter(private val context: Context, private val resultLauncher: ActivityResultLauncher<Intent>, var dataSet: MutableList<PrinterData>) : RecyclerView.Adapter<PrinterListAdapter.ViewHolder>() {
     /**
      * Provide a reference to the type of views that you are using
      * (custom ViewHolder)
      */
     private var printing = false
+    private var printerEntityViewModel: PrinterEntityViewModel? = null
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView
@@ -61,24 +61,19 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
 
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
-        if (dataSet[position].id == null) dataSet[position].id = position
         viewHolder.title.text = dataSet[position].name
 
         viewHolder.selectedPrinter.setText(dataSet[position].printerName)
 
         viewHolder.tilSelectedPrinter.setEndIconOnClickListener {
-            val converted = SharedPrefsManager.writeAsJSON(dataSet[position])
-
             val intent = Intent(context, PrinterInputForm::class.java)
-            intent.putExtra(FORM_EDIT_KEY, converted)
+            intent.putExtra(FORM_EDIT_KEY, dataSet[position])
             resultLauncher.launch(intent)
         }
 
         viewHolder.selectedPrinter.setOnClickListener {
-            val converted = SharedPrefsManager.writeAsJSON(dataSet[position])
-
             val intent = Intent(context, PrinterInputForm::class.java)
-            intent.putExtra(FORM_EDIT_KEY, converted)
+            intent.putExtra(FORM_EDIT_KEY, dataSet[position])
             resultLauncher.launch(intent)
         }
 
@@ -97,8 +92,6 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
     private fun doPrint(printer : PrinterData?, button : Button) {
         printing = true
         button.isEnabled = false
-
-        Log.i("Data", "Kepencet sih")
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -141,10 +134,12 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         positiveButton.setOnClickListener {
             alertDialog.dismiss()
 
-            dataSet.remove(itemToRemove)
-            SharedPrefsManager.removeData(itemToRemove)
+            val index = dataSet.indexOfFirst { it.id == itemToRemove.id }
 
-            notifyDataSetChanged()
+            if (index != -1) {
+                dataSet.remove(itemToRemove)
+                printerEntityViewModel!!.deletePrinter(itemToRemove.id!!)
+            }
         }
 
         negativeButton.setOnClickListener {
@@ -152,5 +147,13 @@ class PrinterListAdapter(private val context: Context, private val resultLaunche
         }
 
         alertDialog.show()
+    }
+
+    fun setViewModel(viewModel: PrinterEntityViewModel) {
+        printerEntityViewModel = viewModel
+    }
+
+    fun setData(newDataSet: MutableList<PrinterData>) {
+        dataSet = newDataSet
     }
 }

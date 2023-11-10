@@ -1,5 +1,8 @@
 package com.lunapos.kioskprinter.dtos
 
+import androidx.annotation.Keep
+
+@Keep
 class PrinterBody {
-    public var message : String = ""
+    var message : String = ""
 }

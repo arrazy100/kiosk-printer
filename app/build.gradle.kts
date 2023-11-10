@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -58,4 +59,11 @@ dependencies {
     implementation("com.github.DantSu:ESCPOS-ThermalPrinter-Android:3.3.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
     implementation("io.github.reactivecircus.flowbinding:flowbinding-android:1.2.0")
+
+    val roomVersion = "2.6.0"
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+    annotationProcessor("androidx.room:room-compiler:$roomVersion")
+
+    ksp("androidx.room:room-compiler:$roomVersion")
 }
