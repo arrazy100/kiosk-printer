@@ -1,9 +1,10 @@
 package com.lunapos.kioskprinter.enums
 
 enum class PaperSizeEnum(val value: Int) {
-    FiftyEight(58),
-    Sixty(60),
+    FortyEight(48),
+    FiftySeven(57),
     SeventySix(76),
+    SeventyEight(78),
     Eighty(80);
 
     companion object {

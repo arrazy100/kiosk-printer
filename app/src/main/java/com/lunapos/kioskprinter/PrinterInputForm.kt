@@ -389,21 +389,31 @@ class PrinterInputForm : AppCompatActivity() {
 
             // set on paper size
             data.paperSize = paperSizeField.value?.let { PaperSizeEnum.fromInt(it.toInt()) }
-            if (data.paperSize == PaperSizeEnum.FiftyEight) {
-                data.printerNbrCharactersPerLine = 32
-                data.printerWidthMM = 58f
-            }
-            else if (data.paperSize == PaperSizeEnum.Sixty) {
-                data.printerNbrCharactersPerLine = 32
-                data.printerWidthMM = 60f
-            }
-            else if (data.paperSize == PaperSizeEnum.SeventySix) {
-                data.printerNbrCharactersPerLine = 48
-                data.printerWidthMM = 76f
-            }
-            else if (data.paperSize == PaperSizeEnum.Eighty) {
-                data.printerNbrCharactersPerLine = 48
-                data.printerWidthMM = 80f
+            when (data.paperSize) {
+                PaperSizeEnum.FortyEight -> {
+                    data.printerNbrCharactersPerLine = 32
+                    data.printerWidthMM = 44f
+                }
+                PaperSizeEnum.FiftySeven -> {
+                    data.printerNbrCharactersPerLine = 32
+                    data.printerWidthMM = 53f
+                }
+                PaperSizeEnum.SeventySix -> {
+                    data.printerNbrCharactersPerLine = 48
+                    data.printerWidthMM = 72f
+                }
+                PaperSizeEnum.SeventyEight -> {
+                    data.printerNbrCharactersPerLine = 48
+                    data.printerWidthMM = 74f
+                }
+                PaperSizeEnum.Eighty -> {
+                    data.printerNbrCharactersPerLine = 48
+                    data.printerWidthMM = 76f
+                }
+
+                else -> {
+                    throw Exception("Paper size not valid")
+                }
             }
 
             data.autoCut = autoCutField.value?.let { AutoCutEnum.fromInt(it.toInt()) }
