@@ -1,7 +1,6 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
-import androidx.annotation.Keep
 import androidx.core.app.NotificationManagerCompat
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -120,13 +119,13 @@ class WebServer private constructor() {
             "GET" -> {
                 exchange.responseHeaders.set("Content-Type", "application/json")
 
-                var paperSizeList = mutableListOf<Int>()
+                var characterNbrPerLines = mutableListOf<Int>()
                 coroutinePrinter!!.printers!!.forEach {
-                    paperSizeList.add(it.paperSize!!.value)
+                    characterNbrPerLines.add(it.printerNbrCharactersPerLine)
                 }
 
                 val responseMap = mapOf(
-                    "data" to paperSizeList
+                    "data" to characterNbrPerLines
                 )
 
                 val response = jacksonObjectMapper().writeValueAsString(responseMap)
