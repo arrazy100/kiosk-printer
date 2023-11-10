@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.lunapos.kioskprinter.enums.AutoCutEnum
-import com.lunapos.kioskprinter.enums.PaperSizeEnum
 import com.lunapos.kioskprinter.enums.PrinterModuleEnum
 import com.lunapos.kioskprinter.enums.PrinterTypeEnum
 
@@ -17,7 +16,6 @@ data class PrinterEntity(
     @ColumnInfo(name = "printerNbrCharactersPerLine") val printerNbrCharactersPerLine: Int,
     @ColumnInfo(name = "printerType") val printerType: PrinterTypeEnum?,
     @ColumnInfo(name = "printerModule") val printerModule: PrinterModuleEnum?,
-    @ColumnInfo(name = "paperSize") val paperSize: PaperSizeEnum?,
     @ColumnInfo(name = "autoCut") val autoCut: AutoCutEnum?,
     @ColumnInfo(name = "disconnectAfterPrint") val disconnectAfterPrint: Boolean?,
     @ColumnInfo(name = "printCopy") val printCopy: Int?,
@@ -34,7 +32,6 @@ data class PrinterEntity(
         printerNbrCharactersPerLine: Int,
         printerType: PrinterTypeEnum?,
         printerModule: PrinterModuleEnum?,
-        paperSize: PaperSizeEnum?,
         autoCut: AutoCutEnum?,
         disconnectAfterPrint: Boolean?,
         printCopy: Int?,
@@ -51,7 +48,6 @@ data class PrinterEntity(
         printerNbrCharactersPerLine,
         printerType,
         printerModule,
-        paperSize,
         autoCut,
         disconnectAfterPrint,
         printCopy,

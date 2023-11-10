@@ -1,8 +1,8 @@
 package com.lunapos.kioskprinter.singletons
 
 import android.content.Context
+import android.util.Log
 import android.widget.Button
-import androidx.annotation.Keep
 import androidx.core.app.NotificationManagerCompat
 import com.lunapos.kioskprinter.Constants.PRINTER_CHANNEL_ID
 import com.lunapos.kioskprinter.Constants.PRINTER_CHANNEL_NAME
@@ -154,6 +154,8 @@ class CoroutinePrinter {
                                 progress
                             )
                         }
+
+                        Log.i("PRINTING", printer.text)
 
                         // Perform printing tasks for the specific printer (on the background thread)
                         printer.print(context)

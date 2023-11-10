@@ -8,6 +8,7 @@ import com.lunapos.kioskprinter.Constants.SERVER_CHANNEL_ID
 import com.lunapos.kioskprinter.Constants.SERVER_CHANNEL_NAME
 import com.lunapos.kioskprinter.Constants.SERVER_NOTIFICATION_ID
 import com.lunapos.kioskprinter.dtos.PrinterBody
+import com.lunapos.kioskprinter.dtos.PrintersBody
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpHandler
 import com.sun.net.httpserver.HttpServer
@@ -43,6 +44,7 @@ class WebServer private constructor() {
         mHttpServer = HttpServer.create(InetSocketAddress(port), 0)
         mHttpServer?.executor = Executors.newCachedThreadPool()
         mHttpServer?.createContext("/", rootHandler)
+        mHttpServer?.createContext("/messages", messageHandler)
 
         mHttpServer?.start() // Start the server
 
@@ -120,7 +122,7 @@ class WebServer private constructor() {
             "GET" -> {
                 handleCorsHeaders(exchange)
 
-                var characterNbrPerLines = mutableListOf<Int>()
+                val characterNbrPerLines = mutableListOf<Int>()
                 coroutinePrinter!!.printers!!.forEach {
                     characterNbrPerLines.add(it.printerNbrCharactersPerLine)
                 }
@@ -164,6 +166,53 @@ class WebServer private constructor() {
                 }
 
                 sendResponse(exchange, body.message)
+            }
+            else -> {
+                // Handle other request methods or provide a response for unsupported methods
+                sendResponse(exchange, "Unsupported HTTP method")
+            }
+        }
+    }
+
+    // Handler for messages
+    private val messageHandler = HttpHandler { exchange : HttpExchange ->
+        // Get request method
+        when (exchange.requestMethod) {
+            "OPTIONS" -> {
+                handleOptionsRequest(exchange)
+                return@HttpHandler
+            }
+            "POST" -> {
+                var body = PrintersBody()
+
+                handleCorsHeaders(exchange)
+                try {
+                    if (coroutinePrinter!!.printing) {
+                        sendResponse(exchange, "Still printing in background")
+                    }
+
+                    val context = this.context.get()
+                    body = parseBody(exchange)
+
+                    if (context != null) {
+                        for ((index, print) in coroutinePrinter!!.printers!!.withIndex()) {
+                            print.text = body.messages[index]
+                        }
+                        coroutinePrinter?.doPrintOnServer(
+                            notifications,
+                            context,
+                            notificationManager!!
+                        )
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    sendResponse(exchange, "Failed with exception")
+                } finally {
+                    sendResponse(exchange, "Print on progress")
+                }
+
+                val response = jacksonObjectMapper().writeValueAsString(body.messages)
+                sendResponse(exchange, response)
             }
             else -> {
                 // Handle other request methods or provide a response for unsupported methods

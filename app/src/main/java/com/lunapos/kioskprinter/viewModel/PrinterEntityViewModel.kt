@@ -45,7 +45,6 @@ class PrinterEntityViewModel(application: Application) : AndroidViewModel(applic
             data.printerNbrCharactersPerLine = printer.printerNbrCharactersPerLine
             data.printerType = printer.printerType
             data.printerModule = printer.printerModule
-            data.paperSize = printer.paperSize
             data.autoCut = printer.autoCut
             data.disconnectAfterPrint = printer.disconnectAfterPrint
             data.printCopy = printer.printCopy
@@ -95,7 +94,6 @@ class PrinterEntityViewModel(application: Application) : AndroidViewModel(applic
             printerNbrCharactersPerLine = printer.printerNbrCharactersPerLine,
             printerType = printer.printerType,
             printerModule = printer.printerModule,
-            paperSize = printer.paperSize,
             autoCut = printer.autoCut ?: AutoCutEnum.False,
             disconnectAfterPrint = printer.disconnectAfterPrint ?: false,
             printCopy = printer.printCopy ?: 1,

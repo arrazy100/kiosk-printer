@@ -15,8 +15,6 @@ import com.google.android.material.textfield.TextInputLayout
 import com.lunapos.kioskprinter.Constants.AUTO_CUT_KEY
 import com.lunapos.kioskprinter.Constants.AUTO_CUT_TITLE
 import com.lunapos.kioskprinter.Constants.FORM_EDIT_KEY
-import com.lunapos.kioskprinter.Constants.PAPER_SIZE_KEY
-import com.lunapos.kioskprinter.Constants.PAPER_SIZE_TITLE
 import com.lunapos.kioskprinter.Constants.PRINTER_ADDED_KEY
 import com.lunapos.kioskprinter.Constants.PRINTER_KEY
 import com.lunapos.kioskprinter.Constants.PRINTER_MODULE_KEY
@@ -30,7 +28,6 @@ import com.lunapos.kioskprinter.PrinterUtil.USBPrinterPermission
 import com.lunapos.kioskprinter.databinding.ActivityPrinterInputFormBinding
 import com.lunapos.kioskprinter.dtos.PrinterData
 import com.lunapos.kioskprinter.enums.AutoCutEnum
-import com.lunapos.kioskprinter.enums.PaperSizeEnum
 import com.lunapos.kioskprinter.enums.PrinterModuleEnum
 import com.lunapos.kioskprinter.enums.PrinterTypeEnum
 import com.lunapos.kioskprinter.ui.FormFieldAutoComplete
@@ -99,14 +96,43 @@ class PrinterInputForm : AppCompatActivity() {
             }
         )
     }
+    private val printerDPIField by lazy {
+        FormFieldText(
+            scope = lifecycleScope,
+            textInputLayout = binding.tilPrinterDpi,
+            textInputEditText = binding.etPrinterDpi,
+            validation = { value ->
+                when {
+                    value.isNullOrBlank() -> "DPI printer harus diisi"
+                    value.toIntOrNull() == null -> "DPI printer tidak valid"
+                    else -> null
+                }
+            }
+        )
+    }
     private val paperSizeField by lazy {
-        FormFieldAutoComplete(
+        FormFieldText(
             scope = lifecycleScope,
             textInputLayout = binding.tilPaperSize,
             textInputEditText = binding.etPaperSize,
             validation = { value ->
                 when {
-                    value.isNullOrBlank() -> "Ukuran kertas harus dipilih"
+                    value.isNullOrBlank() -> "Ukuran kertas harus diisi"
+                    value.toFloatOrNull() == null -> "Ukuran kertas tidak valid"
+                    else -> null
+                }
+            }
+        )
+    }
+    private val charactersPerLineField by lazy {
+        FormFieldText(
+            scope = lifecycleScope,
+            textInputLayout = binding.tilCharactersPerLine,
+            textInputEditText = binding.etCharactersPerLine,
+            validation = { value ->
+                when {
+                    value.isNullOrBlank() -> "Panjang karakter print harus diisi"
+                    value.toIntOrNull() == null -> "Panjang karakter print tidak valid"
                     else -> null
                 }
             }
@@ -139,7 +165,9 @@ class PrinterInputForm : AppCompatActivity() {
             printerTypeField,
             printerModuleField,
             printerField,
+            printerDPIField,
             paperSizeField,
+            charactersPerLineField,
             autoCutField
         )
     }
@@ -160,7 +188,6 @@ class PrinterInputForm : AppCompatActivity() {
             val printerTypeValue = result.data!!.getStringExtra(PRINTER_TYPE_KEY)
             val printerModuleValue = result.data!!.getStringExtra(PRINTER_MODULE_KEY)
             val printerValue = result.data!!.getStringExtra(PRINTER_KEY)
-            val paperSizeValue = result.data!!.getStringExtra(PAPER_SIZE_KEY)
             val autoCutValue = result.data!!.getStringExtra(AUTO_CUT_KEY)
 
             if (printerTypeValue != null) binding.etPrinterType.setText(printerTypeValue)
@@ -208,7 +235,6 @@ class PrinterInputForm : AppCompatActivity() {
                     USBPrinterPermission.requestUsbDevicePermission(applicationContext, this, selectedUsb)
                 }
             }
-            if (paperSizeValue != null) binding.etPaperSize.setText(paperSizeValue)
             if (autoCutValue != null) binding.etAutoCut.setText(autoCutValue)
         }
     }
@@ -237,7 +263,9 @@ class PrinterInputForm : AppCompatActivity() {
             printerTypeField.value = obj.printerType.toString()
             printerModuleField.value = obj.printerModule.toString()
             printerField.value = obj.getPrinter()
-            paperSizeField.value = obj.paperSize!!.value.toString()
+            printerDPIField.value = obj.printerDpi.toString()
+            paperSizeField.value = obj.printerWidthMM.toInt().toString()
+            charactersPerLineField.value = obj.printerNbrCharactersPerLine.toString()
             autoCutField.value = obj.autoCut!!.value.toString()
             binding.checkboxDisconnect.isChecked = obj.disconnectAfterPrint == true
             binding.printCopyValue.text = obj.printCopy.toString()
@@ -277,13 +305,6 @@ class PrinterInputForm : AppCompatActivity() {
         }
         binding.etPrinter.setOnClickListener {
             printerClickListener()
-        }
-
-        binding.tilPaperSize.setEndIconOnClickListener {
-            paperSizeClickListener()
-        }
-        binding.etPaperSize.setOnClickListener {
-            paperSizeClickListener()
         }
 
         binding.tilAutoCut.setEndIconOnClickListener {
@@ -345,15 +366,6 @@ class PrinterInputForm : AppCompatActivity() {
         resultLauncher.launch(intent)
     }
 
-    private fun paperSizeClickListener() {
-        val dataList = ArrayList(enumValues<PaperSizeEnum>().map { it.value.toString() })
-        val intent = Intent(this, DropdownMenu::class.java)
-        intent.putExtra("title", PAPER_SIZE_TITLE)
-        intent.putExtra("key", PAPER_SIZE_KEY)
-        intent.putStringArrayListExtra("data", dataList)
-        resultLauncher.launch(intent)
-    }
-
     private fun autoCutClickListener() {
         val dataList = ArrayList(enumValues<AutoCutEnum>().map { it.value.toString() })
         val intent = Intent(this, DropdownMenu::class.java)
@@ -387,34 +399,9 @@ class PrinterInputForm : AppCompatActivity() {
                 data.networkAddress = printerField.value
             }
 
-            // set on paper size
-            data.paperSize = paperSizeField.value?.let { PaperSizeEnum.fromInt(it.toInt()) }
-            when (data.paperSize) {
-                PaperSizeEnum.FortyEight -> {
-                    data.printerNbrCharactersPerLine = 32
-                    data.printerWidthMM = 44f
-                }
-                PaperSizeEnum.FiftySeven -> {
-                    data.printerNbrCharactersPerLine = 32
-                    data.printerWidthMM = 53f
-                }
-                PaperSizeEnum.SeventySix -> {
-                    data.printerNbrCharactersPerLine = 48
-                    data.printerWidthMM = 72f
-                }
-                PaperSizeEnum.SeventyEight -> {
-                    data.printerNbrCharactersPerLine = 48
-                    data.printerWidthMM = 74f
-                }
-                PaperSizeEnum.Eighty -> {
-                    data.printerNbrCharactersPerLine = 48
-                    data.printerWidthMM = 76f
-                }
-
-                else -> {
-                    throw Exception("Paper size not valid")
-                }
-            }
+            data.printerDpi = printerDPIField.value!!.toInt()
+            data.printerWidthMM = paperSizeField.value!!.toFloat()
+            data.printerNbrCharactersPerLine = charactersPerLineField.value!!.toInt()
 
             data.autoCut = autoCutField.value?.let { AutoCutEnum.fromInt(it.toInt()) }
             data.disconnectAfterPrint = binding.checkboxDisconnect.isChecked

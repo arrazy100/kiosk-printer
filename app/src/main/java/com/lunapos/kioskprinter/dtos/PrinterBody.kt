@@ -4,5 +4,5 @@ import androidx.annotation.Keep
 
 @Keep
 class PrinterBody {
-    var message : String = ""
+    var message: String = ""
 }

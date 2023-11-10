@@ -203,16 +203,15 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
 
-                <!-- PAPER SIZE SECTION -->
+                <!-- PRINTER DPI SECTION -->
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ukuran Kertas"
+                    android:text="DPI Printer"
                     android:textSize="16sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/til_paper_size"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                    android:id="@+id/til_printer_dpi"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingBottom="16dp"
@@ -224,15 +223,75 @@
                     app:boxStrokeWidth="1dp"
                     app:hintEnabled="false">
 
-                    <AutoCompleteTextView
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_printer_dpi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionNext"
+                        android:inputType="text"
+                        android:hint="203" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+                <!-- PAPER SIZE SECTION -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ukuran Kertas"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_paper_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="16dp"
+                    app:boxCornerRadiusBottomEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxStrokeColor="@color/form_outline_color"
+                    app:boxStrokeWidth="1dp"
+                    app:hintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_paper_size"
-                        android:focusable="false"
-                        android:clickable="true"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:imeOptions="actionNext"
                         android:inputType="text"
                         android:hint="58" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+
+                <!-- NUMBER CHARACTERS PER LINE SECTION -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Karakter Per Baris"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/til_characters_per_line"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="16dp"
+                    app:boxCornerRadiusBottomEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxStrokeColor="@color/form_outline_color"
+                    app:boxStrokeWidth="1dp"
+                    app:hintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_characters_per_line"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:imeOptions="actionNext"
+                        android:inputType="text"
+                        android:hint="32" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
